@@ -50,3 +50,9 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# My local files
+*.old
+README.
+test*.pl
+examples/*.c
