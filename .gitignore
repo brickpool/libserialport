@@ -53,6 +53,5 @@ dkms.conf
 
 # My local files
 *.old
-README.
 test*.pl
 examples/*.c

@@ -1,8 +1,12 @@
-Revision history for Perl extension SerialPort.
+Revision history for Perl extension Sigrok::SerialPort.
 
-0.02  2019-10-30
-	- SerialPort OOP Class, createt with Moose
+0.0201  2019-11-22
+	- Extending documentation
+	- Adding examples
 
-0.01  2019-10-10
+0.0200  2019-10-30
+	- SerialPort OOP Class, created with Moose
+
+0.0100  2019-10-10
 	- original version; created by h2xs 1.23 with options
 		-A SerialPort

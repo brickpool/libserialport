@@ -109,7 +109,8 @@ __END__
 
 =head1 NAME
 
-Sigrok::SerialPort::Backend - XS module providing an interface to the API of the C library libserialport
+Sigrok::SerialPort::Backend - XS module providing an interface to the API of the
+C library libserialport
 
 =head1 SYNOPSIS
 
@@ -380,7 +381,7 @@ Set the RTS pin behaviour in a port configuration.
 
 Set the CTS pin behaviour for the specified serial port.
 
-  $ret = sp_set_cts($port, SP_CTS_OFF);
+  $ret = sp_set_cts($port, SP_CTS_IGNORE);
 
 =item C<sp_get_config_cts>
 
@@ -392,7 +393,276 @@ Get the CTS pin behaviour from a port configuration.
 
 Set the CTS pin behaviour in a port configuration.
 
-  $ret = sp_set_config_cts($config, SP_CTS_ON);
+  $ret = sp_set_config_cts($config, SP_CTS_FLOW_CONTROL);
+
+=item C<sp_set_dtr>
+
+Set the DTR pin behaviour for the specified serial port.
+
+  $ret = sp_set_dtr($port, SP_DTR_OFF);
+
+=item C<sp_get_config_dtr>
+
+Get the DTR pin behaviour from a port configuration.
+
+  $ret = sp_get_config_dtr($config, \$dtr);
+
+=item C<sp_set_config_dtr>
+
+Set the DTR pin behaviour in a port configuration.
+
+  $ret = sp_get_config_dtr($config, SP_DTR_ON);
+
+=item C<sp_set_dsr>
+
+Set the DSR pin behaviour for the specified serial port.
+
+  $ret = sp_set_dsr($port, SP_DSR_IGNORE);
+
+=item C<sp_get_config_dsr>
+
+Get the DSR pin behaviour from a port configuration.
+
+  $ret = sp_get_config_dsr($config, \$dsr);
+
+=item C<sp_set_config_dsr>
+
+Set the DSR pin behaviour in a port configuration.
+
+  $ret = sp_get_config_dsr($config, SP_DSR_FLOW_CONTROL);
+
+=item C<sp_set_xon_xoff>
+
+Set the XON/XOFF configuration for the specified serial port.
+
+  $ret = sp_set_xon_xoff($port, SP_XONXOFF_DISABLED);
+
+=item C<sp_get_config_xon_xoff>
+
+Get the XON/XOFF configuration from a port configuration.
+
+  $ret = sp_get_config_xon_xoff($config, \$xon_xoff);
+
+=item C<sp_set_config_xon_xoff>
+
+Set the XON/XOFF configuration in a port configuration.
+
+  $ret = sp_set_config_xon_xoff($config, SP_XONXOFF_INOUT);
+
+=item C<sp_set_config_flowcontrol>
+
+Set the flow control type in a port configuration.
+
+  $ret = sp_set_config_flowcontrol($port, SP_FLOWCONTROL_RTSCTS);
+
+=item C<sp_set_flowcontrol>
+
+Set the flow control type for the specified serial port.
+
+  $ret = sp_set_flowcontrol($port, SP_FLOWCONTROL_NONE);
+
+=back
+
+=head3 Data handling
+
+=over 12
+
+=item C<sp_blocking_read>
+
+Read bytes from the specified serial port, blocking until complete.
+
+  $ret = sp_blocking_read($port, \$buf, $count, $timeout_ms);
+
+=item C<sp_blocking_read_next>
+
+Read bytes from the specified serial port, returning as soon as any data is
+available.
+
+  $ret = sp_blocking_read_next($port, \$buf, $count, $timeout_ms);
+
+=item C<sp_nonblocking_read>
+
+Read bytes from the specified serial port, without blocking.
+
+  $ret = sp_nonblocking_read($port, \$buf, $count);
+
+=item C<sp_blocking_write>
+
+Write bytes to the specified serial port, blocking until complete.
+
+  $ret = sp_blocking_write($port, $buf, $count, $timeout_ms);
+
+=item C<sp_nonblocking_write>
+
+Write bytes to the specified serial port, without blocking.
+
+  $ret = sp_nonblocking_write($port, $buf, $count);
+
+=item C<sp_input_waiting>
+
+Gets the number of bytes waiting in the input buffer.
+
+  $ret = sp_input_waiting($port);
+
+=item C<sp_output_waiting>
+
+Gets the number of bytes waiting in the output buffer.
+
+  $ret = sp_output_waiting($port);
+
+=item C<sp_flush>
+
+Flush serial port buffers. Data in the selected buffer(s) is discarded.
+
+  $ret = sp_flush($port, SP_BUF_BOTH);
+
+=item C<sp_drain>
+
+Wait for buffered data to be transmitted.
+
+  $ret = sp_drain($port);
+
+=back
+
+=head3 Waiting
+
+=over 12
+
+=item C<sp_new_event_set>
+
+Allocate storage for a set of events.
+
+  $ret = sp_new_event_set(\$event_set);
+
+=item C<sp_add_port_events>
+
+Add events to a struct sp_event_set for a given port.
+
+  $ret = sp_add_port_events($event_set, $port, SP_EVENT_RX_READY);
+
+=item C<sp_wait>
+
+Wait for any of a set of events to occur.
+
+  $ret = sp_wait($event_set, $timeout_ms);
+
+=item C<sp_wait>
+
+Free a structure allocated by L</sp_new_event_set>.
+
+  $ret = sp_free_event_set($event_set, $timeout_ms);
+
+=back
+
+=head3 Signals
+
+=over 12
+
+=item C<sp_get_signals>
+
+Gets the status of the control signals for the specified port.
+
+  $ret = sp_get_signals($port, \$signal_mask);
+
+=item C<sp_start_break>
+
+Put the port transmit line into the break state.
+
+  $ret = sp_start_break($port);
+
+=item C<sp_end_break>
+
+Take the port transmit line out of the break state.
+
+  $ret = sp_end_break($port);
+
+=back
+
+=head3 Errors
+
+=over 12
+
+=item C<sp_last_error_code>
+
+Get the error code for a failed operation.
+
+  $ret = sp_last_error_code();
+
+=item C<sp_last_error_message>
+
+Get the error message for a failed operation.
+
+  $ret = sp_last_error_message();
+
+=item C<sp_last_error_message>
+
+Free an error message returned by L</sp_last_error_message>.
+
+  sp_free_error_message();
+
+=item C<sp_set_debug>
+
+Set the handler function for library debugging messages.
+
+  # enable debugging
+  sp_set_debug(1);
+  ...
+  # disable debugging
+  sp_set_debug(0);
+
+=back
+
+=head3 Versions
+
+=over 12
+
+=item C<sp_get_major_package_version>
+
+Get the major libserialport package version number.
+
+  $ret = sp_get_major_package_version();
+
+=item C<sp_get_minor_package_version>
+
+Get the minor libserialport package version number.
+
+  $ret = sp_get_minor_package_version();
+
+=item C<sp_get_micro_package_version>
+
+Get the micro libserialport package version number.
+
+  $ret = sp_get_micro_package_version();
+
+=item C<sp_get_package_version_string>
+
+Get the libserialport package version number as a string.
+
+  $ret = sp_get_package_version_string();
+
+=item C<sp_get_current_lib_version>
+
+Get the "current" part of the libserialport library version number.
+
+  $ret = sp_get_current_lib_version();
+
+=item C<sp_get_revision_lib_version>
+
+Get the "revision" part of the libserialport library version number.
+
+  $ret = sp_get_revision_lib_version();
+
+=item C<sp_get_age_lib_version>
+
+Get the "age" part of the libserialport library version number.
+
+  $ret = sp_get_age_lib_version();
+
+=item C<sp_get_lib_version_string>
+
+Get the libserialport library version number as a string.
+
+  $ret = sp_get_lib_version_string();
 
 =back
 
@@ -418,7 +688,7 @@ Source repository is at L<https://github.com/brickpool/libserialport>.
 
 =head1 AUTHOR
 
-J. Schneider
+J. Schneider L<https://github.com/brickpool>
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -435,10 +705,6 @@ Copyright (C) 2014 Uwe Hermann <uwe@hermann-uwe.de>
 =item *
 
 Copyright (C) 2014 Aurelien Jacobs <aurel@gnuage.org>
-
-=item *
-
-Copyright (C) 2019 J. Schneider L<https://github.com/brickpool>
 
 =back
 

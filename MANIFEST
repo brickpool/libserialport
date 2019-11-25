@@ -1,5 +1,8 @@
 Changes
 examples/example.pl
+examples/easy.pl
+examples/list-ports.pl
+examples/README.md
 lib/Sigrok/SerialPort.pm
 lib/Sigrok/SerialPort/Backend.pm
 lib/Sigrok/SerialPort/Base.pm
@@ -10,10 +13,11 @@ lib/Sigrok/SerialPort/List/Ports.pm
 lib/Sigrok/SerialPort/Port/Config.pm
 libiio/Makefile.PL
 libiio/MANIFEST
-libiio/README
+libiio/README.md
+LICENSE
 Makefile.PL
 MANIFEST
-README
+README.md
 SerialPort.xs
 t/backend/01_const.t
 t/backend/02_versions.t

@@ -297,7 +297,7 @@ sp_free_port_list( ... )
     U32 ix_ports = 0;
   INIT:
     if (items < 1)
-      croak("Usage: Sigrok::SerialPort::Backend::free_port_list(ports)");
+      croak("Usage: Sigrok::SerialPort::Backend::sp_free_port_list(ports)");
   CODE:
   {
     while (items--) {
