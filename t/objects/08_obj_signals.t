@@ -1,5 +1,5 @@
 use strict;
-use Test::More;
+use Test::More tests => 7;
 
 use Sigrok::SerialPort qw( :const );
 use Sigrok::SerialPort::List;
@@ -9,28 +9,29 @@ my $list;
 my $port;
 
 # get (first) port
-$list = Sigrok::SerialPort::List->new;
-ok $list->is_ok, 'List->new';
-if ($list->is_ok and not $list->ports->is_empty) {
-  $port = $list->ports->get(0);
+ok eval{ $list = Sigrok::SerialPort::List->new }, 'List->new';
+SKIP: {
+  skip 'Skipping Sigrok::SerialPort::List tests', 1
+    unless defined $list and not $list->ports->is_empty;
+
+  ok $port = $list->ports->get(0), 'List->ports->get';
 }
- 
-if (defined $port)
-{
+
+SKIP: {
+  skip 'Skipping Sigrok::SerialPort::Port tests', 5
+    unless defined $port;
+
   # open
-  $port->open(SP_MODE_READ);
-  is $port->return_code, SP_OK, 'open';
+  ok $port->open(SP_MODE_READ), 'open';
 
   # signal
   my $signal = $port->get_signals;
-  is $port->return_code, SP_OK, 'get_signals';
-  ok $signal >= 0 && $signal <= SP_SIG_CTS|SP_SIG_DSR|SP_SIG_DCD|SP_SIG_RI, 'signal';
-  ok $port->start_break,        'start_break';
-  ok $port->end_break,          'end_break';
+  ok $signal >= 0 && $signal <= SP_SIG_CTS|SP_SIG_DSR|SP_SIG_DCD|SP_SIG_RI, 'get_signals';
+  ok $port->start_break,  'start_break';
+  ok $port->end_break,    'end_break';
   
   # close
-  $port->close();
-  is $port->return_code, SP_OK, 'close';
+  ok $port->close(), 'close';
 }
   
 done_testing;

@@ -1,5 +1,5 @@
 use strict;
-use Test::More;
+use Test::More tests => 14;
 
 use Sigrok::SerialPort qw( :const );
 use Sigrok::SerialPort::List;
@@ -10,61 +10,79 @@ use constant TIMEOUT  => 500;
 
 my $list;
 my $port;
+my $buf;
+my $num;
 
 # get (first) port
-$list = Sigrok::SerialPort::List->new;
-ok $list->is_ok, 'List->new';
-if ($list->is_ok and not $list->ports->is_empty) {
-  $port = $list->ports->get(0);
+ok eval{ $list = Sigrok::SerialPort::List->new }, 'List->new';
+SKIP: {
+  skip 'Skipping Sigrok::SerialPort::List tests', 1
+    unless defined $list and not $list->ports->is_empty;
+
+  ok $port = $list->ports->get(0), 'List->ports->get';
 }
 
-if (defined $port)
-{
-  my $buf;
-  my $num;
+SKIP: {
+  skip 'Skipping Sigrok::SerialPort::Port data tests', 3
+    unless defined $port;
 
   # open
-  $port->open(SP_MODE_READ_WRITE);
-  is $port->return_code, SP_OK, 'Port->open';
+  ok $port->open(SP_MODE_READ_WRITE), 'Port->open';
 
   # read
-  $port->flush(SP_BUF_INPUT);
-  is $port->return_code, SP_OK, 'Port->flush';
+  ok $port->flush(SP_BUF_INPUT), 'Port->flush';
   $num = $port->input_waiting;
   ok $num >= 0, 'Port->input_waiting';
-  if ($num > 0) {
-    $buf = chr(0x55) x COUNT;
-    ($num, $buf) = $port->blocking_read(COUNT, TIMEOUT);
-    ok $num >= 0, 'Port->blocking_read';
+}
+
+SKIP: {
+  skip 'Skipping Sigrok::SerialPort::Port read tests', 3
+    unless defined $port and $num > 0;
+
+  # read
+  $buf = chr(0x55) x COUNT;
+  ($num, $buf) = $port->blocking_read(COUNT, TIMEOUT);
+  ok $num >= 0, 'Port->blocking_read';
+
+  $buf = chr(0xAA) x COUNT;
+  ($num, $buf) = $port->blocking_read_next(COUNT, TIMEOUT);
+  ok $num >= 0, 'Port->blocking_read_next';
   
-    $buf = chr(0xAA) x COUNT;
-    ($num, $buf) = $port->blocking_read_next(COUNT, TIMEOUT);
-    ok $num >= 0, 'Port->blocking_read_next';
-    
-    $buf = chr(0x55) x COUNT;
-    ($num, $buf) = $port->nonblocking_read(COUNT);
-    ok $num >= 0, 'Port->nonblocking_read';
-  }
+  $buf = chr(0x55) x COUNT;
+  ($num, $buf) = $port->nonblocking_read(COUNT);
+  ok $num >= 0, 'Port->nonblocking_read';
+}
+
+SKIP: {
+  skip 'Skipping Sigrok::SerialPort::Port data tests', 3
+    unless defined $port;
 
   # write
   ok $port->drain, 'Port->drain';
-  $port->flush(SP_BUF_OUTPUT);
-  is $port->return_code, SP_OK, 'Port->flush';
+  ok $port->flush(SP_BUF_OUTPUT), 'Port->flush';
   $num = $port->output_waiting;
   is $num, 0, 'Port->output_waiting';
-  if ($num == 0) {
-    $buf = chr(0xAA) x COUNT;
-    $num = $port->blocking_write($buf, COUNT, TIMEOUT);
-    ok $num >= 0, 'Port->blocking_write';
-  
-    $buf = chr(0x55) x COUNT;
-    $num = $port->nonblocking_write($buf, COUNT);
-    ok $num >= 0, 'Port->nonblocking_write';
-  }
+}
+
+SKIP: {
+  skip 'Skipping Sigrok::SerialPort::Port write tests', 2
+    unless defined $port and $num == 0;
+
+  $buf = chr(0xAA) x COUNT;
+  $num = $port->blocking_write($buf, COUNT, TIMEOUT);
+  ok $num >= 0, 'Port->blocking_write';
+
+  $buf = chr(0x55) x COUNT;
+  $num = $port->nonblocking_write($buf, COUNT);
+  ok $num >= 0, 'Port->nonblocking_write';
+}
+
+SKIP: {
+  skip 'Skipping Sigrok::SerialPort::Port cleanup tests', 1
+    unless defined $port;
 
   # cleanup
-  $port->close;
-  is $port->return_code, SP_OK, 'Port->close';
+  ok $port->close(), 'Port->close';
   undef $port;
 }
 

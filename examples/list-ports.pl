@@ -14,8 +14,7 @@ use strict;
 use warnings;
 use blib;
 use Time::HiRes qw(sleep);
-use Sigrok::SerialPort qw( :const );
-use Sigrok::SerialPort::Backend qw( :all );
+use Sigrok::SerialPort qw(:all);
 
 # Configuration
 my $portNameBase = "COM3";

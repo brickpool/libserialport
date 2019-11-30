@@ -2,14 +2,9 @@ package Sigrok::SerialPort::Base;
 
 use Moose;
 use Moose::Util::TypeConstraints;
-use MooseX::Params::Validate;
-use Carp qw( carp );
 
-use Sigrok::SerialPort qw( :const );
-use Sigrok::SerialPort::Backend qw(
-  sp_last_error_code
-  sp_last_error_message
-  sp_set_debug
+use Sigrok::SerialPort qw(
+  :const
 
   sp_get_major_package_version
   sp_get_minor_package_version
@@ -139,15 +134,15 @@ subtype 'sp_transport'
 
 subtype 'sp_port'
   => as 'Int',
-  => where { $_ > 0 };
+  => where { $_ >= 0 };
 
 subtype 'sp_port_config'
   => as 'Int',
-  => where { $_ > 0 };
+  => where { $_ >= 0 };
 
 subtype 'sp_event_set'
   => as 'Int',
-  => where { $_ > 0 };
+  => where { $_ >= 0 };
 
 ##
 #
@@ -174,146 +169,6 @@ subtype 'unsigned_int'
 subtype 'size_t'
   => as 'Int',
   => where { $_ >= 0 };
-
-##
-#
-# Return values
-#
-##
-
-has 'return',
-  isa       => 'sp_return',
-  required  => 1,
-  init_arg  => 'undef',
-  default   => SP_OK,
-  reader    => 'return_code',
-  # private methods
-  writer    => '_set_return_code';
-
-##
-#
-# Errors
-#
-##
-
-has 'debug',
-  isa       => 'Bool',
-  required  => 1,
-  default   => sub { $ENV{'LIBSERIALPORT_DEBUG'} ? 1 : 0 },
-  predicate => 'is_debug',
-  writer    => 'set_debug',
-  # private methods
-  trigger   => \&_trigger_debug;
-
-##
-#
-# additional public methods
-#
-##
-
-my @sp_return = ();
-{
-  $sp_return[- SP_OK]       = 'SP_OK';
-  $sp_return[- SP_ERR_ARG]  = 'SP_ERR_ARG';
-  $sp_return[- SP_ERR_MEM]  = 'SP_ERR_MEM';
-  $sp_return[- SP_ERR_FAIL] = 'SP_ERR_FAIL';
-  $sp_return[- SP_ERR_SUPP] = 'SP_ERR_SUPP';
-}
-
-sub RETURN_OK {
-  shift->_set_return_code(SP_OK);
-  return SP_OK;
-}
-
-sub RETURN_INT
-{
-  my $self = shift;
-  my ($val) = pos_validated_list( \@_,
-    { isa => 'Int' },
-  );
-  $self->_set_return_code($val >= 0 ? SP_OK : $val);
-  return $val;
-}
-
-sub RETURN_ERROR
-{
-  my $self = shift;
-  my ($val, $msg) = pos_validated_list( \@_,
-    { isa => 'sp_return' },
-    { isa => 'Str' },
-  );
-  $self->_set_return_code($val);
-  local $Carp::CarpLevel += 1;
-  my $func = (caller($Carp::CarpLevel))[3];
-  my $err = $sp_return[- $val];
-  Carp::carp sprintf("%s returning %s: %s", $func, $err, $msg);
-  return $val;
-}
-
-sub RETURN_FAIL
-{
-  my $self = shift;
-  my ($msg) = pos_validated_list( \@_,
-    { isa => 'Str' },
-  );
-  $self->_set_return_code(SP_ERR_FAIL);
-  local $Carp::CarpLevel += 1;
-  my $func = (caller($Carp::CarpLevel))[3];
-  my $err = 'SP_ERR_FAIL';
-  Carp::carp sprintf("%s returning %s: %s", $func, $err, $msg);
-  return SP_ERR_FAIL;
-}
-
-sub SET_ERROR
-{
-  my $self = shift;
-  my ($val, $msg) = pos_validated_list( \@_,
-    { isa => 'sp_return' },
-    { isa => 'Str' },
-  );
-  $self->_set_return_code($val);
-  local $Carp::CarpLevel += 1;
-  my $func = (caller($Carp::CarpLevel))[3];
-  my $err = $sp_return[- $val];
-  Carp::carp sprintf("%s returning %s: %s", $func, $err, $msg);
-  return undef;
-}
-
-sub SET_FAIL
-{
-  my $self = shift;
-  my ($msg) = pos_validated_list( \@_,
-    { isa => 'Str' },
-  );
-  $self->_set_return_code(SP_ERR_FAIL);
-  local $Carp::CarpLevel += 1;
-  my $func = (caller($Carp::CarpLevel))[3];
-  my $err = 'SP_ERR_FAIL';
-  Carp::carp sprintf("%s returning %s: %s", $func, $err, $msg);
-  return undef;
-}
-
-sub exit_status {
-  return shift->return_code;
-}
-
-sub is_ok {
-  return shift->return_code == SP_OK;
-}
-
-##
-#
-# Errors
-#
-##
-
-sub last_error_code {
-  return sp_last_error_code();
-}
-
-sub last_error_message {
-  return sp_last_error_message();
-}
 
 ##
 #
@@ -351,23 +206,6 @@ sub get_age_lib_version {
 
 sub get_lib_version_string {
   return sp_get_lib_version_string();
-}
-
-##
-#
-# private trigger methods
-#
-##
-
-sub _trigger_debug
-{
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'Bool' },
-    { isa => 'Bool', optional => 1 },
-  );
-  return if defined $old && !$new == !$old;
-  sp_set_debug($new);
 }
 
 no Moose;

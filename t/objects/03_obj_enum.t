@@ -1,8 +1,6 @@
 use strict;
-use Test::More;
-use Try::Tiny;
+use Test::More tests => 6;
 
-use Sigrok::SerialPort qw( :const );
 use Sigrok::SerialPort::Port;
 use Sigrok::SerialPort::List;
 
@@ -10,25 +8,26 @@ my $portname = 'COM3';
 my $list;
 my $port;
 
-$port = Sigrok::SerialPort::Port->new(portname => $portname);
-ok $port->is_ok && $port->get_handle > 0, 'Port->new(portname => ...)';
+ok eval{ $port = Sigrok::SerialPort::Port->new(portname => $portname) }, 'Port->new(portname => ...)';
+SKIP: {
+  skip 'Skipping Sigrok::SerialPort::Port tests', 1
+    unless defined $port;
 
-try {
-  $list = Sigrok::SerialPort::List->new;
-  ok $list->return_code >= SP_ERR_SUPP && $list->return_code <= SP_OK, 'List->new';
+  ok $port->get_handle > 0, 'Port->get_handle';
+  undef $port;
+}
 
-  if ($list->is_ok) {
-    if ($list->ports->count > 0)
-    {
-      my $first = $list->ports->get(0);
-      ok $first->is_ok, 'List->ports->get';
-      $port = Sigrok::SerialPort::Port->new(port => $first);
-      ok $port->is_ok && $port->get_handle > 0, 'Port->new(port => ...)';
-      undef $port;
-    }
-  }
-} finally {
-  undef $list if $list;
-};
+$list = Sigrok::SerialPort::List->new;
+ok eval{ $list = Sigrok::SerialPort::List->new }, 'List->new';
+SKIP: {
+  skip 'Skipping Sigrok::SerialPort::List tests', 3
+    unless defined $list and not $list->ports->is_empty;
+
+  my $first;
+  ok 1, 'not List->ports->is_empty';
+  ok $first = $list->ports->get(0), 'List->ports->get';
+  ok eval { $port = Sigrok::SerialPort::Port->new(port => $first) }, 'Port->new(port => ...)';
+  undef $port;
+}
 
 done_testing;

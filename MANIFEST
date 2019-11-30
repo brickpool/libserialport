@@ -4,8 +4,8 @@ examples/easy.pl
 examples/list-ports.pl
 examples/README.md
 lib/Sigrok/SerialPort.pm
-lib/Sigrok/SerialPort/Backend.pm
 lib/Sigrok/SerialPort/Base.pm
+lib/Sigrok/SerialPort/Error.pm
 lib/Sigrok/SerialPort/Event.pm
 lib/Sigrok/SerialPort/List.pm
 lib/Sigrok/SerialPort/Port.pm

@@ -3,9 +3,11 @@ package Sigrok::SerialPort::Port::Config;
 use Moose;
 use MooseX::Params::Validate;
 use Carp qw( croak );
+use English qw( -no_match_vars );
 
-use Sigrok::SerialPort qw( SP_ERR_ARG );
-use Sigrok::SerialPort::Backend qw(
+use Sigrok::SerialPort qw(
+  SP_OK
+
   sp_new_config
   sp_free_config
   sp_get_config
@@ -30,6 +32,11 @@ use Sigrok::SerialPort::Backend qw(
   sp_get_config_xon_xoff
   sp_set_config_xon_xoff
   sp_set_config_flowcontrol
+
+  sp_last_error_message
+);
+use Sigrok::SerialPort::Error qw(
+  SET_ERROR
 );
 
 extends 'Sigrok::SerialPort::Base';
@@ -47,12 +54,11 @@ has 'config_handle' => (
   init_arg  => 'handle',
   reader    => 'get_handle',
   # private methods
-  predicate => '_has_handle',
   builder   => '_build_handle',
 );
 
 has 'baudrate' => (
-  isa       => 'sp_baudrate',
+  isa       => 'Maybe[sp_baudrate]',
   reader    => 'get_baudrate',
   writer    => 'set_baudrate',
   # private methods
@@ -60,7 +66,7 @@ has 'baudrate' => (
 );
 
 has 'bits' => (
-  isa       => 'sp_databits',
+  isa       => 'Maybe[sp_databits]',
   reader    => 'get_bits',
   writer    => 'set_bits',
   # private methods
@@ -68,7 +74,7 @@ has 'bits' => (
 );
 
 has 'parity' => (
-  isa       => 'sp_parity',
+  isa       => 'Maybe[sp_parity]',
   reader    => 'get_parity',
   writer    => 'set_parity',
   # private methods
@@ -76,7 +82,7 @@ has 'parity' => (
 );
 
 has 'stopbits' => (
-  isa       => 'sp_stopbits',
+  isa       => 'Maybe[sp_stopbits]',
   reader    => 'get_stopbits',
   writer    => 'set_stopbits',
   # private methods
@@ -84,7 +90,7 @@ has 'stopbits' => (
 );
 
 has 'rts' => (
-  isa       => 'sp_rts',
+  isa       => 'Maybe[sp_rts]',
   reader    => 'get_rts',
   writer    => 'set_rts',
   # private methods
@@ -92,7 +98,7 @@ has 'rts' => (
 );
 
 has 'cts' => (
-  isa       => 'sp_cts',
+  isa       => 'Maybe[sp_cts]',
   reader    => 'get_cts',
   writer    => 'set_cts',
   # private methods
@@ -100,7 +106,7 @@ has 'cts' => (
 );
 
 has 'dtr' => (
-  isa       => 'sp_dtr',
+  isa       => 'Maybe[sp_dtr]',
   reader    => 'get_dtr',
   writer    => 'set_dtr',
   # private methods
@@ -108,7 +114,7 @@ has 'dtr' => (
 );
 
 has 'dsr' => (
-  isa       => 'sp_dsr',
+  isa       => 'Maybe[sp_dsr]',
   reader    => 'get_dsr',
   writer    => 'set_dsr',
   # private methods
@@ -116,7 +122,7 @@ has 'dsr' => (
 );
 
 has 'xon_xoff' => (
-  isa       => 'sp_xonxoff',
+  isa       => 'Maybe[sp_xonxoff]',
   reader    => 'get_xon_xoff',
   writer    => 'set_xon_xoff',
   # private methods
@@ -124,7 +130,7 @@ has 'xon_xoff' => (
 );
 
 has 'flowcontrol' => (
-  isa       => 'sp_flowcontrol',
+  isa       => 'Maybe[sp_flowcontrol]',
   writer    => 'set_flowcontrol',
   # private methods
   trigger   => \&_trigger_flowcontrol,
@@ -138,64 +144,55 @@ has 'flowcontrol' => (
 
 around 'get_baudrate' => sub {
   my ($next, $self) = @_;
-  my $attr = $self->_get_config_baudrate;
-  $self->{baudrate} = $attr if defined $attr;
+  $self->{baudrate} = $self->_get_config_baudrate;
   return $self->$next;
 };
 
 around 'get_bits' => sub {
   my ($next, $self) = @_;
-  my $attr = $self->_get_config_bits;
-  $self->{bits} = $attr if defined $attr;
+  $self->{bits} = $self->_get_config_bits;
   return $self->$next;
 };
 
 around 'get_parity' => sub {
   my ($next, $self) = @_;
-  my $attr = $self->_get_config_parity;
-  $self->{parity} = $attr if defined $attr;
+  $self->{parity} = $self->_get_config_parity;
   return $self->$next;
 };
 
 around 'get_stopbits' => sub {
   my ($next, $self) = @_;
-  my $attr = $self->_get_config_stopbits;
-  $self->{stopbits} = $attr if defined $attr;
+  $self->{stopbits} = $self->_get_config_stopbits;
   return $self->$next;
 };
 
 around 'get_rts' => sub {
   my ($next, $self) = @_;
-  my $attr = $self->_get_config_rts;
-  $self->{rts} = $attr if defined $attr;
+  $self->{rts} = $self->_get_config_rts;
   return $self->$next;
 };
 
 around 'get_cts' => sub {
   my ($next, $self) = @_;
-  my $attr = $self->_get_config_cts;
-  $self->{cts} = $attr if defined $attr;
+  $self->{cts} = $self->_get_config_cts;
   return $self->$next;
 };
 
 around 'get_dtr' => sub {
   my ($next, $self) = @_;
-  my $attr = $self->_get_config_dtr;
-  $self->{dtr} = $attr if defined $attr;
+  $self->{dtr} = $self->_get_config_dtr;
   return $self->$next;
 };
 
 around 'get_dsr' => sub {
   my ($next, $self) = @_;
-  my $attr = $self->_get_config_dsr;
-  $self->{dsr} = $attr if defined $attr;
+  $self->{dsr} = $self->_get_config_dsr;
   return $self->$next;
 };
 
 around 'get_xon_xoff' => sub {
   my ($next, $self) = @_;
-  my $attr = $self->_get_config_xon_xoff;
-  $self->{xon_xoff} = $attr if defined $attr;
+  $self->{xon_xoff} = $self->_get_config_xon_xoff;
   return $self->$next;
 };
 
@@ -207,7 +204,7 @@ around 'get_xon_xoff' => sub {
 
 sub DEMOLISH {
   my $self = shift;
-  $self->_free_config if $self->_has_handle
+  $self->_free_config if $self->get_handle
 }
 
 ##
@@ -218,7 +215,10 @@ sub DEMOLISH {
 
 sub cget
 {
-  my ($self, $param) = @_;
+  my $self = shift;
+  my ($param) = pos_validated_list( \@_,
+    { isa => 'Str' },
+  );
   $param =~ s/^\b/\-/;  # option => -option
   my $ret_val;
   for ($param) {
@@ -234,11 +234,9 @@ sub cget
     else                  {                                   # default
       croak "Validation failed for 'option' with value $_ " .
             "(-baudrate|-bits|-parity|-stopbits|-rts|-cts|-dtr|-dsr|-xon_xoff) is required";
-      $self->SET_ERROR(SP_ERR_ARG, 'Invalid Argument');
-      return undef;
     }
   }
-  return $self->is_ok ? $ret_val : undef;
+  return $ret_val;
 }
 
 sub configure
@@ -257,27 +255,29 @@ sub configure
     '-xon_xoff'    => { isa => 'sp_xonxoff',     optional => 1 },
     '-flowcontrol' => { isa => 'sp_flowcontrol', optional => 1 },
   );
-  $self->RETURN_OK;
-  $self->set_baudrate     ( $options{'-baudrate'}     ) if $options{'-baudrate'};
-    return undef unless $self->is_ok;
-  $self->set_bits         ( $options{'-bits'}         ) if $options{'-bits'};
-    return undef unless $self->is_ok;
-  $self->set_parity       ( $options{'-parity'}       ) if $options{'-parity'};
-    return undef unless $self->is_ok;
-  $self->set_stopbits     ( $options{'-stopbits'}     ) if $options{'-stopbits'};
-    return undef unless $self->is_ok;
-  $self->set_rts          ( $options{'-rts'}          ) if $options{'-rts'};
-    return undef unless $self->is_ok;
-  $self->set_rts          ( $options{'-cts'}          ) if $options{'-cts'};
-    return undef unless $self->is_ok;
-  $self->set_rts          ( $options{'-dtr'}          ) if $options{'-dtr'};
-    return undef unless $self->is_ok;
-  $self->set_rts          ( $options{'-dsr'}          ) if $options{'-dsr'};
-    return undef unless $self->is_ok;
-  $self->set_xon_xoff     ( $options{'-xon_xoff'}     ) if $options{'-xon_xoff'};
-    return undef unless $self->is_ok;
-  $self->set_flowcontrol  ( $options{'-flowcontrol'}  ) if $options{'-flowcontrol'};
-    return undef unless $self->is_ok;
+  SET_ERROR(SP_OK);
+  {
+    $self->set_baudrate     ( $options{'-baudrate'}     ) if $options{'-baudrate'};
+    return undef if $ERRNO;
+    $self->set_bits         ( $options{'-bits'}         ) if $options{'-bits'};
+    return undef if $ERRNO;
+    $self->set_parity       ( $options{'-parity'}       ) if $options{'-parity'};
+    return undef if $ERRNO;
+    $self->set_stopbits     ( $options{'-stopbits'}     ) if $options{'-stopbits'};
+    return undef if $ERRNO;
+    $self->set_rts          ( $options{'-rts'}          ) if $options{'-rts'};
+    return undef if $ERRNO;
+    $self->set_rts          ( $options{'-cts'}          ) if $options{'-cts'};
+    return undef if $ERRNO;
+    $self->set_rts          ( $options{'-dtr'}          ) if $options{'-dtr'};
+    return undef if $ERRNO;
+    $self->set_rts          ( $options{'-dsr'}          ) if $options{'-dsr'};
+    return undef if $ERRNO;
+    $self->set_xon_xoff     ( $options{'-xon_xoff'}     ) if $options{'-xon_xoff'};
+    return undef if $ERRNO;
+    $self->set_flowcontrol  ( $options{'-flowcontrol'}  ) if $options{'-flowcontrol'};
+    return undef if $ERRNO;
+  }
   return 1;
 }
 
@@ -290,17 +290,17 @@ sub configure
 sub _build_handle
 {
   my $self = shift;
-  my $handle;
-  $self->_set_return_code(sp_new_config(\$handle));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-    return undef;
+  my $ret_val;
+  my $ret_code = sp_new_config(\$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return 0;
   }
-  unless ($handle) {
-    $self->SET_FAIL('Undefined result');
-    return undef;
+  unless ($ret_val > 0) {
+    SET_ERROR(&Errno::EFAULT, 'Bad address');
+    return 0;
   }
-  return $handle;
+  return $ret_val;
 }
 
 ##
@@ -316,10 +316,16 @@ sub _trigger_baudrate
     { isa => 'sp_baudrate' },
     { isa => 'sp_baudrate', optional => 1 },
   );
-  $self->_set_return_code(sp_set_config_baudrate($self->get_handle, $new));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
+  my $ret_code = sp_set_config_baudrate($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
 }
 
 sub _trigger_bits
@@ -329,10 +335,16 @@ sub _trigger_bits
     { isa => 'sp_databits' },
     { isa => 'sp_databits', optional => 1 },
   );
-  $self->_set_return_code(sp_set_config_bits($self->get_handle, $new));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
+  my $ret_code = sp_set_config_bits($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
 }
 
 sub _trigger_parity
@@ -342,10 +354,16 @@ sub _trigger_parity
     { isa => 'sp_parity' },
     { isa => 'sp_parity', optional => 1 },
   );
-  $self->_set_return_code(sp_set_config_parity($self->get_handle, $new));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
+  my $ret_code = sp_set_config_parity($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
 }
 
 sub _trigger_stopbits
@@ -355,10 +373,16 @@ sub _trigger_stopbits
     { isa => 'sp_stopbits' },
     { isa => 'sp_stopbits', optional => 1 },
   );
-  $self->_set_return_code(sp_set_config_stopbits($self->get_handle, $new));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
+  my $ret_code = sp_set_config_stopbits($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
 }
 
 sub _trigger_rts
@@ -368,10 +392,16 @@ sub _trigger_rts
     { isa => 'sp_rts' },
     { isa => 'sp_rts', optional => 1 },
   );
-  $self->_set_return_code(sp_set_config_rts($self->get_handle, $new));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
+  my $ret_code = sp_set_config_rts($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
 }
 
 sub _trigger_cts
@@ -381,10 +411,16 @@ sub _trigger_cts
     { isa => 'sp_cts' },
     { isa => 'sp_cts', optional => 1 },
   );
-  $self->_set_return_code(sp_set_config_cts($self->get_handle, $new));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
+  my $ret_code = sp_set_config_cts($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
 }
 
 sub _trigger_dtr
@@ -394,10 +430,16 @@ sub _trigger_dtr
     { isa => 'sp_dtr' },
     { isa => 'sp_dtr', optional => 1 },
   );
-  $self->_set_return_code(sp_set_config_dtr($self->get_handle, $new));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
+  my $ret_code = sp_set_config_dtr($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
 }
 
 sub _trigger_dsr
@@ -407,10 +449,16 @@ sub _trigger_dsr
     { isa => 'sp_dsr' },
     { isa => 'sp_dsr', optional => 1 },
   );
-  $self->_set_return_code(sp_set_config_dsr($self->get_handle, $new));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
+  my $ret_code = sp_set_config_dsr($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
 }
 
 sub _trigger_xon_xoff
@@ -420,10 +468,16 @@ sub _trigger_xon_xoff
     { isa => 'sp_xonxoff' },
     { isa => 'sp_xonxoff', optional => 1 },
   );
-  $self->_set_return_code(sp_set_config_xon_xoff($self->get_handle, $new));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
+  my $ret_code = sp_set_config_xon_xoff($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
 }
 
 sub _trigger_flowcontrol
@@ -433,10 +487,16 @@ sub _trigger_flowcontrol
     { isa => 'sp_flowcontrol' },
     { isa => 'sp_flowcontrol', optional => 1 },
   );
-  $self->_set_return_code(sp_set_config_flowcontrol($self->get_handle, $new));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
+  my $ret_code = sp_set_config_flowcontrol($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
 }
 
 ##
@@ -448,9 +508,13 @@ sub _trigger_flowcontrol
 sub _get_config_baudrate {
   my $self = shift;
   my $ret_val;
-  $self->_set_return_code(sp_get_config_baudrate($self->get_handle, \$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  my $ret_code = sp_get_config_baudrate($self->get_handle, \$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
   return $ret_val;
@@ -459,9 +523,13 @@ sub _get_config_baudrate {
 sub _get_config_bits {
   my $self = shift;
   my $ret_val;
-  $self->_set_return_code(sp_get_config_bits($self->get_handle, \$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  my $ret_code = sp_get_config_bits($self->get_handle, \$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
   return $ret_val;
@@ -470,9 +538,13 @@ sub _get_config_bits {
 sub _get_config_parity {
   my $self = shift;
   my $ret_val;
-  $self->_set_return_code(sp_get_config_parity($self->get_handle, \$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  my $ret_code = sp_get_config_parity($self->get_handle, \$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
   return $ret_val;
@@ -481,9 +553,13 @@ sub _get_config_parity {
 sub _get_config_stopbits {
   my $self = shift;
   my $ret_val;
-  $self->_set_return_code(sp_get_config_stopbits($self->get_handle, \$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  my $ret_code = sp_get_config_stopbits($self->get_handle, \$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
   return $ret_val;
@@ -492,9 +568,13 @@ sub _get_config_stopbits {
 sub _get_config_rts {
   my $self = shift;
   my $ret_val;
-  $self->_set_return_code(sp_get_config_rts($self->get_handle, \$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  my $ret_code = sp_get_config_rts($self->get_handle, \$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
   return $ret_val;
@@ -503,9 +583,13 @@ sub _get_config_rts {
 sub _get_config_cts {
   my $self = shift;
   my $ret_val;
-  $self->_set_return_code(sp_get_config_cts($self->get_handle, \$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  my $ret_code = sp_get_config_cts($self->get_handle, \$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
   return $ret_val;
@@ -514,9 +598,13 @@ sub _get_config_cts {
 sub _get_config_dtr {
   my $self = shift;
   my $ret_val;
-  $self->_set_return_code(sp_get_config_dtr($self->get_handle, \$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  my $ret_code = sp_get_config_dtr($self->get_handle, \$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
   return $ret_val;
@@ -525,9 +613,13 @@ sub _get_config_dtr {
 sub _get_config_dsr {
   my $self = shift;
   my $ret_val;
-  $self->_set_return_code(sp_get_config_dsr($self->get_handle, \$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  my $ret_code = sp_get_config_dsr($self->get_handle, \$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
   return $ret_val;
@@ -536,9 +628,13 @@ sub _get_config_dsr {
 sub _get_config_xon_xoff {
   my $self = shift;
   my $ret_val;
-  $self->_set_return_code(sp_get_config_xon_xoff($self->get_handle, \$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  my $ret_code = sp_get_config_xon_xoff($self->get_handle, \$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
   return $ret_val;
@@ -547,11 +643,13 @@ sub _get_config_xon_xoff {
 sub _free_config
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined config');
-    return;
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
   sp_free_config($self->get_handle);
+  SET_ERROR(SP_OK);
+  return 1;
 }
 
 no Moose;

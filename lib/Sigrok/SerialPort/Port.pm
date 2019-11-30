@@ -6,14 +6,15 @@ use MooseX::Params::Validate;
 use Carp qw( croak );
 
 use Sigrok::SerialPort qw(
+  SP_OK
+  
   SP_ERR_ARG
   SP_ERR_SUPP
   
   SP_TRANSPORT_NATIVE
   SP_TRANSPORT_USB
   SP_TRANSPORT_BLUETOOTH
-);
-use Sigrok::SerialPort::Backend qw(
+
   sp_get_port_by_name
   sp_free_port
   sp_copy_port
@@ -57,6 +58,11 @@ use Sigrok::SerialPort::Backend qw(
   sp_get_signals
   sp_start_break
   sp_end_break
+
+  sp_last_error_message
+);
+use Sigrok::SerialPort::Error qw(
+  SET_ERROR
 );
 use Sigrok::SerialPort::Port::Config;
 
@@ -73,7 +79,6 @@ has 'port_handle' => (
   init_arg  => 'undef',
   reader    => 'get_handle',
   # private methods
-  predicate => '_has_handle',
   writer    => '_set_handle',
 );
 
@@ -84,7 +89,7 @@ has 'port_handle' => (
 ##
 
 has 'mode' => (
-  isa       => 'sp_mode',
+  isa       => 'Maybe[sp_mode]',
   reader    => 'get_mode',
   # private methods
   predicate => '_has_mode',
@@ -101,7 +106,7 @@ has 'is_open' => (
 );
 
 has 'name' => (
-  isa       => 'Str',
+  isa       => 'Maybe[Str]',
   lazy      => 1,
   init_arg  => 'undef',
   reader    => 'get_name',
@@ -110,7 +115,7 @@ has 'name' => (
 );
 
 has 'description' => (
-  isa       => 'Str',
+  isa       => 'Maybe[Str]',
   lazy      => 1,
   init_arg  => 'undef',
   reader    => 'get_description',
@@ -119,7 +124,7 @@ has 'description' => (
 );
 
 has 'transport' => (
-  isa       => 'sp_transport',
+  isa       => 'Maybe[sp_transport]',
   lazy      => 1,
   init_arg  => 'undef',
   reader    => 'get_transport',
@@ -128,7 +133,7 @@ has 'transport' => (
 );
 
 has 'usb_bus' => (
-  isa       => 'Int',
+  isa       => 'Maybe[Int]',
   lazy      => 1,
   init_arg  => 'undef',
   reader    => 'get_usb_bus',
@@ -137,7 +142,7 @@ has 'usb_bus' => (
 );
 
 has 'usb_address' => (
-  isa       => 'Int',
+  isa       => 'Maybe[Int]',
   lazy      => 1,
   init_arg  => 'undef',
   reader    => 'get_usb_address',
@@ -146,7 +151,7 @@ has 'usb_address' => (
 );
 
 has 'usb_vid' => (
-  isa       => 'Int',
+  isa       => 'Maybe[Int]',
   lazy      => 1,
   init_arg  => 'undef',
   reader    => 'get_usb_vid',
@@ -155,7 +160,7 @@ has 'usb_vid' => (
 );
 
 has 'usb_pid' => (
-  isa       => 'Int',
+  isa       => 'Maybe[Int]',
   lazy      => 1,
   init_arg  => 'undef',
   reader    => 'get_usb_pid',
@@ -164,7 +169,7 @@ has 'usb_pid' => (
 );
 
 has 'usb_manufacturer' => (
-  isa       => 'Str',
+  isa       => 'Maybe[Str]',
   lazy      => 1,
   init_arg  => 'undef',
   reader    => 'get_usb_manufacturer',
@@ -173,7 +178,7 @@ has 'usb_manufacturer' => (
 );
 
 has 'usb_product' => (
-  isa       => 'Str',
+  isa       => 'Maybe[Str]',
   lazy      => 1,
   init_arg  => 'undef',
   reader    => 'get_usb_product',
@@ -182,7 +187,7 @@ has 'usb_product' => (
 );
 
 has 'usb_serial' => (
-  isa       => 'Str',
+  isa       => 'Maybe[Str]',
   lazy      => 1,
   init_arg  => 'undef',
   reader    => 'get_usb_serial',
@@ -191,7 +196,7 @@ has 'usb_serial' => (
 );
 
 has 'bluetooth_address' => (
-  isa       => 'Str',
+  isa       => 'Maybe[Str]',
   lazy      => 1,
   init_arg  => 'undef',
   reader    => 'get_bluetooth_address',
@@ -200,7 +205,7 @@ has 'bluetooth_address' => (
 );
 
 has 'native_handle' => (
-  isa       => 'Value',
+  isa       => 'Any',
   lazy      => 1,
   init_arg  => 'undef',
   reader    => 'get_native_handle',
@@ -222,83 +227,53 @@ has 'config' => (
 );
 
 has 'baudrate' => (
-  isa       => 'sp_baudrate',
+  isa       => 'Maybe[sp_baudrate]',
   writer    => 'set_baudrate',
-  # private methods
-  predicate => '_has_baudrate',
-  reader    => '_get_baudrate',
 );
 
 has 'bits' => (
-  isa       => 'sp_databits',
+  isa       => 'Maybe[sp_databits]',
   writer    => 'set_bits',
-  # private methods
-  predicate => '_has_bits',
-  reader    => '_get_bits',
 );
 
 has 'parity' => (
-  isa       => 'sp_parity',
+  isa       => 'Maybe[sp_parity]',
   writer    => 'set_parity',
-  # private methods
-  predicate => '_has_parity',
-  reader    => '_get_parity',
 );
 
 has 'stopbits' => (
-  isa       => 'sp_stopbits',
+  isa       => 'Maybe[sp_stopbits]',
   writer    => 'set_stopbits',
-  # private methods
-  predicate => '_has_stopbits',
-  reader    => '_get_stopbits',
 );
 
 has 'rts' => (
-  isa       => 'sp_rts',
+  isa       => 'Maybe[sp_rts]',
   writer    => 'set_rts',
-  # private methods
-  predicate => '_has_rts',
-  reader    => '_get_rts',
 );
 
 has 'cts' => (
-  isa       => 'sp_cts',
+  isa       => 'Maybe[sp_cts]',
   writer    => 'set_cts',
-  # private methods
-  predicate => '_has_cts',
-  reader    => '_get_cts',
 );
 
 has 'dtr' => (
-  isa       => 'sp_dtr',
+  isa       => 'Maybe[sp_dtr]',
   writer    => 'set_dtr',
-  # private methods
-  predicate => '_has_dtr',
-  reader    => '_get_dtr',
 );
 
 has 'dsr' => (
-  isa       => 'sp_dsr',
+  isa       => 'Maybe[sp_dsr]',
   writer    => 'set_dsr',
-  # private methods
-  predicate => '_has_dsr',
-  reader    => '_get_dsr',
 );
 
 has 'xon_xoff' => (
-  isa       => 'sp_xonxoff',
+  isa       => 'Maybe[sp_xonxoff]',
   writer    => 'set_xon_xoff',
-  # private methods
-  predicate => '_has_xon_xoff',
-  reader    => '_get_xon_xoff',
 );
 
 has 'flowcontrol' => (
-  isa       => 'sp_flowcontrol',
+  isa       => 'Maybe[sp_flowcontrol]',
   writer    => 'set_flowcontrol',
-  # private methods
-  predicate => '_has_flowcontrol',
-  reader    => '_get_flowcontrol',
 );
 
 ##
@@ -311,6 +286,8 @@ has 'buffers' => (
   isa       => 'sp_buffer',
   init_arg  => 'undef',
   writer    => 'flush',
+  # private methods
+  trigger   => \&_trigger_flush,
 );
 
 ##
@@ -320,7 +297,7 @@ has 'buffers' => (
 ##
 
 has 'signal_mask' => (
-  isa       => 'sp_signal',
+  isa       => 'Maybe[sp_signal]',
   lazy      => 1,
   init_arg  => 'undef',
   reader    => 'get_signals',
@@ -379,48 +356,54 @@ around BUILDARGS => sub {
 # The order of processing the parameters by "trigger" can not be guaranteed.
 # "after 'set_ ..." and "BUILD" are used to process the arguments in the correct order.
 
-after 'set_baudrate' => sub {
-  shift->_set_baudrate(@_);
+before 'set_baudrate' => sub {
+  my ($self, $arg) = @_;
+  $self->{baudrate} = $self->_trigger_baudrate($arg);
 };
 
-after 'set_bits' => sub {
-  shift->_set_bits(@_);
+before 'set_bits' => sub {
+  my ($self, $arg) = @_;
+  $self->{bits} = $self->_trigger_bits($arg);
 };
 
-after 'set_parity' => sub {
-  shift->_set_parity(@_);
+before 'set_parity' => sub {
+  my ($self, $arg) = @_;
+  $self->{parity} = $self->_trigger_parity($arg);
 };
 
-after 'set_stopbits' => sub {
-  shift->_set_stopbits(@_);
+before 'set_stopbits' => sub {
+  my ($self, $arg) = @_;
+  $self->{stopbits} = $self->_trigger_stopbits($arg);
 };
 
-after 'set_rts' => sub {
-  shift->_set_rts(@_);
+before 'set_rts' => sub {
+  my ($self, $arg) = @_;
+  $self->{rts} = $self->_trigger_rts($arg);
 };
 
-after 'set_cts' => sub {
-  shift->_set_cts(@_);
+before 'set_cts' => sub {
+  my ($self, $arg) = @_;
+  $self->{cts} = $self->_trigger_cts($arg);
 };
 
-after 'set_dtr' => sub {
-  shift->_set_dtr(@_);
+before 'set_dtr' => sub {
+  my ($self, $arg) = @_;
+  $self->{dtr} = $self->_trigger_dtr($arg);
 };
 
-after 'set_dsr' => sub {
-  shift->_set_dsr(@_);
+before 'set_dsr' => sub {
+  my ($self, $arg) = @_;
+  $self->{dsr} = $self->_trigger_dsr($arg);
 };
 
-after 'set_xon_xoff' => sub {
-  shift->_set_xon_xoff(@_);
+before 'set_xon_xoff' => sub {
+  my ($self, $arg) = @_;
+  $self->{xonxoff} = $self->_trigger_xon_xoff($arg);
 };
 
-after 'set_flowcontrol' => sub {
-  shift->_set_flowcontrol(@_);
-};
-
-after 'flush' => sub {
-  shift->_flush(@_);
+before 'set_flowcontrol' => sub {
+  my ($self, $arg) = @_;
+  $self->{flowcontrol} = $self->_trigger_flowcontrol($arg);
 };
 
 ##
@@ -441,49 +424,44 @@ sub BUILD {
   } else {
     croak 'Attribute (port|portname) is required';
   }
-  $self->_set_handle($handle) if $self->is_ok && $handle;
+  $self->_set_handle($handle) if $handle;
   $self->_clear_copy_handle   if $self->_has_copy_handle;
   $self->_clear_name          if $self->_has_name;
 
   # .. next open the port
   if ($self->_has_mode) {
-    $self->_open_port($self->get_mode);
-    $self->_set_as_open($self->is_ok ? 1 : 0);
+    my $ret_val = $self->_open_port($self->get_mode);
+    $self->_set_as_open($ret_val ? 1 : 0);
   }
 
   # .. configure the port if opened
-  if (!! ( $self->_has_baudrate
-      || $self->_has_bits
-      || $self->_has_parity
-      || $self->_has_stopbits
-      || $self->_has_rts
-      || $self->_has_cts
-      || $self->_has_dtr
-      || $self->_has_dsr
-      || $self->_has_xon_xoff
-      || $self->_has_flowcontrol )
-    &&
-      not $self->is_open
-  ) {
-    croak 'Attribute (mode) is required if using (baudrate|bits|parity|stopbits|rts|cts|dtr|dsr|xon_xoff|flowcontrol)'
+  foreach ( qw(baudrate bits parity stopbits rts cts dtr dsr xonxoff flowcontrol) ) {
+    if (exists $self->{$_}) {
+      unless (defined $self->{$_}) {
+        delete $self->{$_};
+        next;
+      }
+      unless ($self->is_open) {
+        croak "Attribute (mode) is required if using ($_)";
+      }
+    }
   }
-
-  $self->_set_baudrate    ( $self->_get_baudrate    ) if $self->_has_baudrate;
-  $self->_set_bits        ( $self->_get_bits        ) if $self->_has_bits;
-  $self->_set_parity      ( $self->_get_parity      ) if $self->_has_parity;
-  $self->_set_stopbits    ( $self->_get_stopbits    ) if $self->_has_stopbits;
-  $self->_set_rts         ( $self->_get_rts         ) if $self->_has_rts;
-  $self->_set_cts         ( $self->_get_cts         ) if $self->_has_cts;
-  $self->_set_dtr         ( $self->_get_dtr         ) if $self->_has_dtr;
-  $self->_set_dsr         ( $self->_get_dsr         ) if $self->_has_dsr;
-  $self->_set_xon_xoff    ( $self->_get_xon_xoff    ) if $self->_has_xon_xoff;
-  $self->_set_flowcontrol ( $self->_get_flowcontrol ) if $self->_has_flowcontrol;
+  $self->_set_baudrate    ( $self->{baudrate}     ) if exists $self->{baudrate};
+  $self->_set_bits        ( $self->{bits}         ) if exists $self->{bits};
+  $self->_set_parity      ( $self->{parity}       ) if exists $self->{parity};
+  $self->_set_stopbits    ( $self->{stopbits}     ) if exists $self->{stopbits};
+  $self->_set_rts         ( $self->{rts}          ) if exists $self->{rts};
+  $self->_set_cts         ( $self->{cts}          ) if exists $self->{cts};
+  $self->_set_dtr         ( $self->{dtr}          ) if exists $self->{dtr};
+  $self->_set_dsr         ( $self->{dsr}          ) if exists $self->{dsr};
+  $self->_set_xon_xoff    ( $self->{xonxoff}      ) if exists $self->{xonxoff};
+  $self->_set_flowcontrol ( $self->{flowcontrol}  ) if exists $self->{flowcontrol};
 }
 
 sub DEMOLISH {
   my $self = shift;
   $self->_close_port if $self->is_open;
-  $self->_free_port if $self->_has_handle;
+  $self->_free_port if $self->get_handle;
 }
 
 ##
@@ -499,118 +477,100 @@ sub open
     { isa => 'sp_mode' },
   );
   $self->_set_mode($mode);
-  $self->_open_port($self->get_mode);
-  $self->_set_as_open($self->is_ok ? 1 : 0);
-  return $self->is_open ? 1 : 0;
+  my $ret_val = $self->_open_port($self->get_mode);
+  $self->_set_as_open($ret_val ? 1 : 0);
+  return undef unless defined $ret_val;
+  return $self->is_open;
 }
 
 sub close
 {
   my $self = shift;
-  $self->_close_port if $self->is_open;
+  my $ret_val = $self->_close_port;
   $self->_set_as_open(0);
+  return $ret_val;
 }
 
 sub is_native
 {
-  return shift->get_transport == SP_TRANSPORT_NATIVE;
+  my $ret_val = shift->get_transport;
+  return undef unless defined $ret_val;
+  return $ret_val == SP_TRANSPORT_NATIVE;
 }
 
 sub is_usb
 {
-  return shift->get_transport == SP_TRANSPORT_USB;
+  my $ret_val = shift->get_transport;
+  return undef unless defined $ret_val;
+  return $ret_val == SP_TRANSPORT_USB;
 }
 
 sub is_bluetooth
 {
-  return shift->get_transport == SP_TRANSPORT_BLUETOOTH;
+  my $ret_val = shift->get_transport;
+  return undef unless defined $ret_val;
+  return $ret_val == SP_TRANSPORT_BLUETOOTH;
 }
 
 sub get_usb {
   my $self = shift;
   return qw('-bus' '-address' '-vid' '-pid' '-manufacturer' '-product' '-serial') unless @_;
   my @options = @_;
-  my @ret_val = ();
+  my @ret_list = ();
+  my $ret_val;
   s/^\b/\-/ for @options; # option => -option
   foreach (@options) {
-    if (/^-bus$/) {
-      push @ret_val, $self->get_usb_bus;
-      last unless $self->is_ok;
-    }
-    elsif (/^-address$/) {
-      push @ret_val, $self->get_usb_address;
-      last unless $self->is_ok;
-    }
-    elsif (/^-vid$/) {
-      push @ret_val, $self->get_usb_vid;
-      last unless $self->is_ok;
-    }
-    elsif (/^-pid$/) {
-      push @ret_val, $self->get_usb_pid;
-      last unless $self->is_ok;
-    }
-    elsif (/^-pid$/) {
-      push @ret_val, $self->get_usb_pid;
-      last unless $self->is_ok;
-    }
-    elsif (/^-manufacturer$/) {
-      push @ret_val, $self->get_usb_manufacturer;
-      last unless $self->is_ok;
-    }
-    elsif (/^-product$/) {
-      push @ret_val, $self->get_usb_product;
-      last unless $self->is_ok;
-    }
-    elsif (/^-serial$/) {
-      push @ret_val, $self->get_usb_serial;
-      last unless $self->is_ok;
-    }
-    else {
+    undef $ret_val;
+    if    (/^-bus$/         ) { $ret_val = $self->get_usb_bus           }
+    elsif (/^-address$/     ) { $ret_val = $self->get_usb_address       }
+    elsif (/^-vid$/         ) { $ret_val = $self->get_usb_vid           }
+    elsif (/^-pid$/         ) { $ret_val = $self->get_usb_pid           }
+    elsif (/^-pid$/         ) { $ret_val = $self->get_usb_pid           }
+    elsif (/^-manufacturer$/) { $ret_val = $self->get_usb_manufacturer  }
+    elsif (/^-product$/     ) { $ret_val = $self->get_usb_product       }
+    elsif (/^-serial$/      ) { $ret_val = $self->get_usb_serial        }
+    else                      {
       croak "Validation failed for 'option' with value $_ " .
             "(-bus|-address|-vid|-pid|-manufacturer|-product|-serial) is required";
-      $self->SET_ERROR(SP_ERR_ARG, 'Invalid Argument');
-      return undef;
     }
+    return undef unless defined $ret_val;
+    push @ret_list, $ret_val;
   }
-  return @ret_val;
+  return @ret_list;
 }
 
 sub cget
 {
   my $self = shift;
-  my $ret_val;
-
-  $self->RETURN_OK;
-  $self->_read_config;
-  $ret_val = $self->config->cget(@_) if $self->is_ok;
-  $self->RETURN_INT($self->config->return_code) if $self->is_ok;
-  return $self->is_ok ? $ret_val : undef;
+  return undef unless $self->_read_settings;
+  return $self->config->cget(@_)
 }
 
 sub configure
 {
   my $self = shift;
-  return qw('-baudrate' '-bits' '-parity' '-stopbits' '-rts' '-cts' '-dtr' '-dsr' '-xon_xoff') unless @_;
-  my (%options) = validated_hash( \@_,
-    '-baudrate'    => { isa => 'sp_baudrate',    optional => 1 },
-    '-bits'        => { isa => 'sp_databits',    optional => 1 },
-    '-parity'      => { isa => 'sp_parity',      optional => 1 },
-    '-stopbits'    => { isa => 'sp_stopbits',    optional => 1 },
-    '-rts'         => { isa => 'sp_rts',         optional => 1 },
-    '-cts'         => { isa => 'sp_cts',         optional => 1 },
-    '-dtr'         => { isa => 'sp_dtr',         optional => 1 },
-    '-dsr'         => { isa => 'sp_dsr',         optional => 1 },
-    '-xon_xoff'    => { isa => 'sp_xonxoff',     optional => 1 },
-    '-flowcontrol' => { isa => 'sp_flowcontrol', optional => 1 },
-  );
-  $self->RETURN_OK;
-  my $ret_val;
-  $self->_read_config;
-  $ret_val = $self->config->configure(%options) if $self->is_ok;
-  $self->RETURN_INT($self->config->return_code) if $self->is_ok;
-  $self->_apply_config if $self->is_ok;
-  return $self->is_ok ? $ret_val : undef;
+  return undef unless $self->_read_settings;
+  return $self->config->configure(@_);
 }
+
+sub write_settings {
+  my $self = shift;
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  unless ($self->is_open) {
+    SET_ERROR(&Errno::EACCES, 'Permission denied');
+    return undef;
+  }
+  my $ret_code = sp_set_config($self->get_handle, $self->config->get_handle);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  SET_ERROR(SP_OK);
+  return 1;
+};
 
 sub blocking_read
 {
@@ -619,17 +579,15 @@ sub blocking_read
     { isa => 'size_t'       },
     { isa => 'unsigned_int' },
   );
-  unless ($self->_has_handle) {
-    return
-      $self->RETURN_FAIL('Undefined port'),
-      undef;
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
   my $ret_buf = '\0' x $count;
-  my $ret_val = $self->RETURN_INT(sp_blocking_read($self->get_handle, \$ret_buf, $count, $timeout));
-  unless ($self->is_ok) {
-    return
-      $self->RETURN_ERROR($self->return_code, $self->last_error_message),
-      undef;
+  my $ret_val = sp_blocking_read($self->get_handle, \$ret_buf, $count, $timeout);
+  unless ($ret_val >= 0) {
+    SET_ERROR($ret_val);
+    return undef;
   }
   return $ret_val, $ret_buf;
 }
@@ -641,17 +599,15 @@ sub blocking_read_next
     { isa => 'size_t'       },
     { isa => 'unsigned_int' },
   );
-  unless ($self->_has_handle) {
-    return
-      $self->RETURN_FAIL('Undefined port'),
-      undef;
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
   my $ret_buf = '\0' x $count;
-  my $ret_val = $self->RETURN_INT(sp_blocking_read_next($self->get_handle, \$ret_buf, $count, $timeout));
-  unless ($self->is_ok) {
-    return
-      $self->RETURN_ERROR($self->return_code, $self->last_error_message),
-      undef;
+  my $ret_val = sp_blocking_read_next($self->get_handle, \$ret_buf, $count, $timeout);
+  unless ($ret_val >= 0) {
+    SET_ERROR($ret_val);
+    return undef;
   }
   return $ret_val, $ret_buf;
 }
@@ -662,17 +618,15 @@ sub nonblocking_read
   my ($count) = pos_validated_list( \@_,
     { isa => 'size_t' },
   );
-  unless ($self->_has_handle) {
-    return
-      $self->RETURN_FAIL('Undefined port'),
-      undef;
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
   my $ret_buf = '\0' x $count;
-  my $ret_val = $self->RETURN_INT(sp_nonblocking_read($self->get_handle, \$ret_buf, $count));
-  unless ($self->is_ok) {
-    return
-      $self->RETURN_ERROR($self->return_code, $self->last_error_message),
-      undef;
+  my $ret_val = sp_nonblocking_read($self->get_handle, \$ret_buf, $count);
+  unless ($ret_val >= 0) {
+    SET_ERROR($ret_val);
+    return undef;
   }
   return $ret_val, $ret_buf;
 }
@@ -685,16 +639,16 @@ sub blocking_write
     { isa => 'size_t'       },
     { isa => 'unsigned_int' },
   );
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port'),
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
-  $self->RETURN_INT(sp_blocking_write($self->get_handle, $buf, $count, $timeout));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my $ret_val = sp_blocking_write($self->get_handle, $buf, $count, $timeout);
+  unless ($ret_val >= 0) {
+    SET_ERROR($ret_val);
     return undef;
   }
-  return 1;
+  return $ret_val;
 }
 
 sub nonblocking_write
@@ -704,27 +658,29 @@ sub nonblocking_write
     { isa => 'Str'    },
     { isa => 'size_t' },
   );
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port'),
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
-  $self->RETURN_INT(sp_nonblocking_write($self->get_handle, $buf, $count));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my $ret_val = sp_nonblocking_write($self->get_handle, $buf, $count);
+  unless ($ret_val >= 0) {
+    SET_ERROR($ret_val);
     return undef;
   }
-  return 1;
+  return $ret_val;
 }
 
 sub input_waiting
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    return $self->RETURN_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
-  my $ret_val = $self->RETURN_INT(sp_input_waiting($self->get_handle));
-  unless ($self->is_ok) {
-    return $self->RETURN_ERROR($self->return_code, $self->last_error_message);
+  my $ret_val = sp_input_waiting($self->get_handle);
+  unless ($ret_val >= 0) {
+    SET_ERROR($ret_val);
+    return undef;
   }
   return $ret_val;
 }
@@ -732,57 +688,62 @@ sub input_waiting
 sub output_waiting
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    return $self->RETURN_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
-  my $ret_val = $self->RETURN_INT(sp_output_waiting($self->get_handle));
-  unless ($self->is_ok) {
-    return $self->RETURN_ERROR($self->return_code, $self->last_error_message);
+  my $ret_val = sp_output_waiting($self->get_handle);
+  unless ($ret_val >= 0) {
+    SET_ERROR($ret_val);
+    return undef;
   }
   return $ret_val;
 }
 
 sub drain {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
-  $self->RETURN_INT(sp_drain($self->get_handle));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my $ret_code = sp_drain($self->get_handle);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return 1;
 }
 
 sub start_break
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
-  $self->RETURN_INT(sp_start_break($self->get_handle));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my $ret_code = sp_start_break($self->get_handle);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return 1;
 }
 
 sub end_break
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
-  $self->RETURN_INT(sp_end_break($self->get_handle));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my $ret_code = sp_end_break($self->get_handle);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return 1;
 }
 
@@ -796,18 +757,18 @@ sub _build_port_by_name
 {
   my $self = shift;
   unless ($self->_has_name) {
-    $self->SET_FAIL('Undefined port');
-    return undef;
+    SET_ERROR(&Errno::ENOENT, 'No such file or directory');
+    return 0;
   }
   my $ret_val;
-  $self->RETURN_INT(sp_get_port_by_name($self->_get_name, \$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-    return undef;
+  my $ret_code = sp_get_port_by_name($self->_get_name, \$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return 0;
   }
-  unless ($ret_val) {
-    $self->SET_FAIL('Undefined result');
-    return undef;
+  unless ($ret_val > 0) {
+    SET_ERROR(&Errno::EFAULT, 'Bad address');
+    return 0;
   }
   return $ret_val;
 }
@@ -816,18 +777,18 @@ sub _build_copy_port
 {
   my $self = shift;
   unless ($self->_has_copy_handle) {
-    $self->SET_FAIL('Undefined port');
-    return undef;
+    SET_ERROR(&Errno::ENXIO, 'No such device or address');
+    return 0;
   }
   my $ret_val;
-  $self->RETURN_INT(sp_copy_port($self->_get_copy_handle, \$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-    return undef;
+  my $ret_code = sp_copy_port($self->_get_copy_handle, \$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return 0;
   }
-  unless ($ret_val) {
-    $self->SET_FAIL('Undefined result');
-    return undef;
+  unless ($ret_val > 0) {
+    SET_ERROR(&Errno::EFAULT, 'Bad address');
+    return 0;
   }
   return $ret_val;
 }
@@ -835,14 +796,13 @@ sub _build_copy_port
 sub _build_name
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
-  $self->RETURN_OK;
   my $ret_val = sp_get_port_name($self->get_handle);
   unless ($ret_val) {
-    $self->SET_FAIL('Undefined result string');
+    SET_ERROR(&Errno::EFAULT, 'Bad address');
     return undef;
   }
   return $ret_val;
@@ -851,14 +811,13 @@ sub _build_name
 sub _build_description
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
-  $self->RETURN_OK;
   my $ret_val = sp_get_port_description($self->get_handle);
   unless ($ret_val) {
-    $self->SET_FAIL('Undefined result string');
+    SET_ERROR(&Errno::EFAULT, 'Bad address');
     return undef;
   }
   return $ret_val;
@@ -871,29 +830,33 @@ sub _build_config {
 sub _build_transport
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
-  $self->RETURN_OK;
-  return sp_get_port_transport($self->get_handle);
+  my $ret_val = sp_get_port_transport($self->get_handle);
+  unless ($ret_val >= 0) {
+    SET_ERROR($ret_val);
+    return undef;
+  }
+  return $ret_val;
 }
 
 sub _build_usb_bus
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
   unless ($self->is_usb) {
-    $self->SET_ERROR(SP_ERR_SUPP, 'Port does not use USB');
+    SET_ERROR(&Errno::EOPNOTSUPP, 'Operation not supported on transport endpoint');
     return undef;
   }
   my $ret_val;
-  $self->RETURN_INT(sp_get_port_usb_bus_address($self->get_handle, \$ret_val, \$_));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my $ret_code = sp_get_port_usb_bus_address($self->get_handle, \$ret_val, \$_);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
   return $ret_val;
@@ -902,18 +865,18 @@ sub _build_usb_bus
 sub _build_usb_address
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
   unless ($self->is_usb) {
-    $self->SET_ERROR(SP_ERR_SUPP, 'Port does not use USB');
+    SET_ERROR(&Errno::EOPNOTSUPP, 'Operation not supported on transport endpoint');
     return undef;
   }
   my $ret_val;
-  $self->RETURN_INT(sp_get_port_usb_bus_address($self->get_handle, \$_, \$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my $ret_code = sp_get_port_usb_bus_address($self->get_handle, \$_, \$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
   return $ret_val;
@@ -922,18 +885,18 @@ sub _build_usb_address
 sub _build_usb_vid
 {
   my $self = shift;
-  my $ret_val;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
   unless ($self->is_usb) {
-    $self->SET_ERROR(SP_ERR_SUPP, 'Port does not use USB');
+    SET_ERROR(&Errno::EOPNOTSUPP, 'Operation not supported on transport endpoint');
     return undef;
   }
-  $self->RETURN_INT(sp_get_port_usb_vid_pid($self->get_handle, \$ret_val, \$_));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my $ret_val;
+  my $ret_code = sp_get_port_usb_vid_pid($self->get_handle, \$ret_val, \$_);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
   return $ret_val;
@@ -942,18 +905,18 @@ sub _build_usb_vid
 sub _build_usb_pid
 {
   my $self = shift;
-  my $ret_val;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
   unless ($self->is_usb) {
-    $self->SET_ERROR(SP_ERR_SUPP, 'Port does not use USB');
+    SET_ERROR(&Errno::EOPNOTSUPP, 'Operation not supported on transport endpoint');
     return undef;
   }
-  $self->RETURN_INT(sp_get_port_usb_vid_pid($self->get_handle, \$_, \$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my $ret_val;
+  my $ret_code = sp_get_port_usb_vid_pid($self->get_handle, \$_, \$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
   return $ret_val;
@@ -962,18 +925,17 @@ sub _build_usb_pid
 sub _build_usb_manufacturer
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
   unless ($self->is_usb) {
-    $self->SET_ERROR(SP_ERR_SUPP, 'Port does not use USB');
+    SET_ERROR(&Errno::EOPNOTSUPP, 'Operation not supported on transport endpoint');
     return undef;
   }
-  $self->RETURN_OK;
   my $ret_val = sp_get_port_usb_manufacturer($self->get_handle);
   unless ($ret_val) {
-    $self->SET_FAIL('Undefined result string');
+    SET_ERROR(&Errno::EFAULT, 'Bad address');
     return undef;
   }
   return $ret_val;
@@ -982,18 +944,17 @@ sub _build_usb_manufacturer
 sub _build_usb_product
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
   unless ($self->is_usb) {
-    $self->SET_ERROR(SP_ERR_SUPP, 'Port does not use USB');
+    SET_ERROR(&Errno::EOPNOTSUPP, 'Operation not supported on transport endpoint');
     return undef;
   }
-  $self->RETURN_OK;
   my $ret_val = sp_get_port_usb_product($self->get_handle);
   unless ($ret_val) {
-    $self->SET_FAIL('Undefined result string');
+    SET_ERROR(&Errno::EFAULT, 'Bad address');
     return undef;
   }
   return $ret_val;
@@ -1002,18 +963,17 @@ sub _build_usb_product
 sub _build_usb_serial
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
   unless ($self->is_usb) {
-    $self->SET_ERROR(SP_ERR_SUPP, 'Port does not use USB');
+    SET_ERROR(&Errno::EOPNOTSUPP, 'Operation not supported on transport endpoint');
     return undef;
   }
-  $self->RETURN_OK;
   my $ret_val = sp_get_port_usb_serial($self->get_handle);
   unless ($ret_val) {
-    $self->SET_FAIL('Undefined result string');
+    SET_ERROR(&Errno::EFAULT, 'Bad address');
     return undef;
   }
   return $ret_val;
@@ -1022,18 +982,17 @@ sub _build_usb_serial
 sub _build_bluetooth_address
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
   unless ($self->is_bluetooth) {
-    $self->SET_ERROR(SP_ERR_SUPP, 'Port does not use Bluetooth');
+    SET_ERROR(&Errno::EOPNOTSUPP, 'Operation not supported on transport endpoint');
     return undef;
   }
-  $self->RETURN_OK;
   my $ret_val = sp_get_port_bluetooth_address($self->get_handle);
   unless ($ret_val) {
-    $self->SET_FAIL('Undefined result string');
+    SET_ERROR(&Errno::EFAULT, 'Bad address');
     return undef;
   }
   return $ret_val;
@@ -1042,15 +1001,14 @@ sub _build_bluetooth_address
 sub _build_native_handle
 {
   my $self = shift;
-  my $ret_val;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
-  $self->RETURN_OK;
-  $self->RETURN_INT(sp_get_port_handle($self->get_handle, \$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my $ret_val;
+  my $ret_code = sp_get_port_handle($self->get_handle, \$ret_val);  
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
   return $ret_val;
@@ -1059,20 +1017,277 @@ sub _build_native_handle
 sub _build_signals
 {
   my $self = shift;
-  my $ret_val;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
     return undef;
   }
-  $self->RETURN_OK;
-  $self->RETURN_INT(sp_get_signals($self->get_handle, \$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my $ret_val;
+  my $ret_code = sp_get_signals($self->get_handle, \$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
   return $ret_val;
 }
 
+##
+#
+# private trigger methods
+#
+##
+
+sub _trigger_baudrate
+{
+  my $self = shift;
+  my ($new, $old) = pos_validated_list( \@_,
+    { isa => 'sp_baudrate' },
+    { isa => 'sp_baudrate', optional => 1 },
+  );
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  unless ($self->is_open) {
+    SET_ERROR(&Errno::EACCES, 'Permission denied');
+    return undef;
+  }
+  my $ret_code = sp_set_baudrate($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
+}
+
+sub _trigger_bits
+{
+  my $self = shift;
+  my ($new, $old) = pos_validated_list( \@_,
+    { isa => 'sp_databits' },
+    { isa => 'sp_databits', optional => 1 },
+  );
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  unless ($self->is_open) {
+    SET_ERROR(&Errno::EACCES, 'Permission denied');
+    return undef;
+  }
+  my $ret_code = sp_set_bits($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
+}
+
+sub _trigger_parity
+{
+  my $self = shift;
+  my ($new, $old) = pos_validated_list( \@_,
+    { isa => 'sp_parity' },
+    { isa => 'sp_parity', optional => 1 },
+  );
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  unless ($self->is_open) {
+    SET_ERROR(&Errno::EACCES, 'Permission denied');
+    return undef;
+  }
+  my $ret_code = sp_set_parity($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
+}
+
+sub _trigger_stopbits
+{
+  my $self = shift;
+  my ($new, $old) = pos_validated_list( \@_,
+    { isa => 'sp_stopbits' },
+    { isa => 'sp_stopbits', optional => 1 },
+  );
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  unless ($self->is_open) {
+    SET_ERROR(&Errno::EACCES, 'Permission denied');
+    return undef;
+  }
+  my $ret_code = sp_set_stopbits($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
+}
+
+sub _trigger_rts
+{
+  my $self = shift;
+  my ($new, $old) = pos_validated_list( \@_,
+    { isa => 'sp_rts' },
+    { isa => 'sp_rts', optional => 1 },
+  );
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  unless ($self->is_open) {
+    SET_ERROR(&Errno::EACCES, 'Permission denied');
+    return undef;
+  }
+  my $ret_code = sp_set_rts($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
+}
+
+sub _trigger_cts
+{
+  my $self = shift;
+  my ($new, $old) = pos_validated_list( \@_,
+    { isa => 'sp_cts' },
+    { isa => 'sp_cts', optional => 1 },
+  );
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  unless ($self->is_open) {
+    SET_ERROR(&Errno::EACCES, 'Permission denied');
+    return undef;
+  }
+  my $ret_code = sp_set_cts($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
+}
+
+sub _trigger_dtr
+{
+  my $self = shift;
+  my ($new, $old) = pos_validated_list( \@_,
+    { isa => 'sp_dtr' },
+    { isa => 'sp_dtr', optional => 1 },
+  );
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  unless ($self->is_open) {
+    SET_ERROR(&Errno::EACCES, 'Permission denied');
+    return undef;
+  }
+  my $ret_code = sp_set_dtr($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
+}
+
+sub _trigger_dsr
+{
+  my $self = shift;
+  my ($new, $old) = pos_validated_list( \@_,
+    { isa => 'sp_dsr' },
+    { isa => 'sp_dsr', optional => 1 },
+  );
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  unless ($self->is_open) {
+    SET_ERROR(&Errno::EACCES, 'Permission denied');
+    return undef;
+  }
+  my $ret_code = sp_set_dsr($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
+}
+
+sub _trigger_xon_xoff
+{
+  my $self = shift;
+  my ($new, $old) = pos_validated_list( \@_,
+    { isa => 'sp_xonxoff' },
+    { isa => 'sp_xonxoff', optional => 1 },
+  );
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  unless ($self->is_open) {
+    SET_ERROR(&Errno::EACCES, 'Permission denied');
+    return undef;
+  }
+  my $ret_code = sp_set_xon_xoff($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
+}
+
+sub _trigger_flowcontrol
+{
+  my $self = shift;
+  my ($new, $old) = pos_validated_list( \@_,
+    { isa => 'sp_flowcontrol' },
+    { isa => 'sp_flowcontrol', optional => 1 },
+  );
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  unless ($self->is_open) {
+    SET_ERROR(&Errno::EACCES, 'Permission denied');
+    return undef;
+  }
+  my $ret_code = sp_set_flowcontrol($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
+}
+
+sub _trigger_flush
+{
+  my $self = shift;
+  my ($new, $old) = pos_validated_list( \@_,
+    { isa => 'sp_buffer' },
+    { isa => 'sp_buffer', optional => 1 },
+  );
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  unless ($self->is_open) {
+    SET_ERROR(&Errno::EACCES, 'Permission denied');
+    return undef;
+  }
+  my $ret_code = sp_set_flowcontrol($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
+}
 ##
 #
 # private backend wrapper methods
@@ -1082,11 +1297,13 @@ sub _build_signals
 sub _free_port
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
   sp_free_port($self->get_handle);
+  SET_ERROR(SP_OK);
+  return 1;
 }
 
 sub _open_port
@@ -1095,284 +1312,57 @@ sub _open_port
   my ($mode) = pos_validated_list( \@_,
     { isa => 'sp_mode' },
   );
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
-  $self->RETURN_INT(sp_open($self->get_handle, $mode));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my $ret_code = sp_open($self->get_handle, $mode);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
   }
+  SET_ERROR(SP_OK);
+  return 1;
 }
 
 sub _close_port
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
   unless ($self->is_open) {
-    $self->SET_FAIL('Port not open');
-    return;
+    SET_ERROR(&Errno::EACCES, 'Permission denied');
+    return undef;
   }
-  $self->RETURN_INT(sp_close($self->get_handle));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my $ret_code = sp_close($self->get_handle);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
   }
+  SET_ERROR(SP_OK);
+  return 1;
 }
 
-sub _read_config {
+sub _read_settings {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
   unless ($self->is_open) {
-    $self->SET_FAIL('Port not open');
-    return;
+    SET_ERROR(&Errno::EACCES, 'Permission denied');
+    return undef;
   }
-  $self->RETURN_INT(sp_get_config($self->get_handle, $self->config->get_handle));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my $ret_code = sp_get_config($self->get_handle, $self->config->get_handle);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
   }
+  SET_ERROR(SP_OK);
+  return 1;
 };
-
-sub _apply_config {
-  my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
-  }
-  unless ($self->is_open) {
-    $self->SET_FAIL('Port not open');
-    return;
-  }
-  $self->RETURN_INT(sp_set_config($self->get_handle, $self->config->get_handle));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-  }
-};
-
-sub _set_baudrate
-{
-  my $self = shift;
-  my ($baudrate) = pos_validated_list( \@_,
-    { isa => 'sp_baudrate' },
-  );
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
-  }
-  unless ($self->is_open) {
-    $self->SET_FAIL('Port not open');
-    return;
-  }
-  $self->RETURN_INT(sp_set_baudrate($self->get_handle, $baudrate));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-  }
-}
-
-sub _set_bits
-{
-  my $self = shift;
-  my ($bits) = pos_validated_list( \@_,
-    { isa => 'sp_databits' },
-  );
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
-  }
-  unless ($self->is_open) {
-    $self->SET_FAIL('Port not open');
-    return;
-  }
-  $self->RETURN_INT(sp_set_bits($self->get_handle, $bits));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-  }
-}
-
-sub _set_parity
-{
-  my $self = shift;
-  my ($parity) = pos_validated_list( \@_,
-    { isa => 'sp_parity' },
-  );
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
-  }
-  unless ($self->is_open) {
-    $self->SET_FAIL('Port not open');
-    return;
-  }
-  $self->RETURN_INT(sp_set_parity($self->get_handle, $parity));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-  }
-}
-
-sub _set_stopbits
-{
-  my $self = shift;
-  my ($stopbits) = pos_validated_list( \@_,
-    { isa => 'sp_stopbits' },
-  );
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
-  }
-  unless ($self->is_open) {
-    $self->SET_FAIL('Port not open');
-    return;
-  }
-  $self->RETURN_INT(sp_set_stopbits($self->get_handle, $stopbits));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-  }
-}
-
-sub _set_rts
-{
-  my $self = shift;
-  my ($rts) = pos_validated_list( \@_,
-    { isa => 'sp_rts' },
-  );
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
-  }
-  unless ($self->is_open) {
-    $self->SET_FAIL('Port not open');
-    return;
-  }
-  $self->RETURN_INT(sp_set_rts($self->get_handle, $rts));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-  }
-}
-
-sub _set_cts
-{
-  my $self = shift;
-  my ($cts) = pos_validated_list( \@_,
-    { isa => 'sp_cts' },
-  );
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
-  }
-  unless ($self->is_open) {
-    $self->SET_FAIL('Port not open');
-    return;
-  }
-  $self->RETURN_INT(sp_set_cts($self->get_handle, $cts));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-  }
-}
-
-sub _set_dtr
-{
-  my $self = shift;
-  my ($dtr) = pos_validated_list( \@_,
-    { isa => 'sp_dtr' },
-  );
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
-  }
-  unless ($self->is_open) {
-    $self->SET_FAIL('Port not open');
-    return;
-  }
-  $self->RETURN_INT(sp_set_dtr($self->get_handle, $dtr));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-  }
-}
-
-sub _set_dsr
-{
-  my $self = shift;
-  my ($dsr) = pos_validated_list( \@_,
-    { isa => 'sp_dsr' },
-  );
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
-  }
-  unless ($self->is_open) {
-    $self->SET_FAIL('Port not open');
-    return;
-  }
-  $self->RETURN_INT(sp_set_dsr($self->get_handle, $dsr));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-  }
-}
-
-sub _set_xon_xoff
-{
-  my $self = shift;
-  my ($xon_xoff) = pos_validated_list( \@_,
-    { isa => 'sp_xonxoff' },
-  );
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
-  }
-  unless ($self->is_open) {
-    $self->SET_FAIL('Port not open');
-    return;
-  }
-  $self->RETURN_INT(sp_set_xon_xoff($self->get_handle, $xon_xoff));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-  }
-}
-
-sub _set_flowcontrol
-{
-  my $self = shift;
-  my ($flowcontrol) = pos_validated_list( \@_,
-    { isa => 'sp_flowcontrol' },
-  );
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
-  }
-  unless ($self->is_open) {
-    $self->SET_FAIL('Port not open');
-    return;
-  }
-  $self->RETURN_INT(sp_set_flowcontrol($self->get_handle, $flowcontrol));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-  }
-}
-
-sub _flush
-{
-  my $self = shift;
-  my ($buffers) = pos_validated_list( \@_,
-    { isa => 'sp_buffer' },
-  );
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined port');
-    return;
-  }
-  unless ($self->is_open) {
-    $self->SET_FAIL('Port not open');
-    return;
-  }
-  $self->RETURN_INT(sp_flush($self->get_handle, $buffers));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-  }
-}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;

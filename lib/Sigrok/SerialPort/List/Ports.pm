@@ -1,11 +1,18 @@
 package Sigrok::SerialPort::List::Ports;
 
 use Moose;
-use Carp qw( carp );
 
-use Sigrok::SerialPort::Backend qw(
+use Sigrok::SerialPort qw(
+  SP_OK
+  SP_ERR_FAIL
+
   sp_list_ports
   sp_free_port_list
+
+  sp_last_error_message
+);
+use Sigrok::SerialPort::Error qw(
+  SET_ERROR
 );
 use Sigrok::SerialPort::Port;
 
@@ -42,30 +49,22 @@ has 'port_list' => (
 sub _build_port_list
 {
   my $self = shift;
-  my @ret_val = ();
   my @list;
-  $self->RETURN_INT(sp_list_ports(\@list));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my @ret_val = ();
+  my $ret_code = sp_list_ports(\@list);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return \@ret_val;
   }
   foreach my $handle ( @list ) {
     my $port = Sigrok::SerialPort::Port->new(handle => $handle);
-    unless (defined $port) {
-      $self->SET_FAIL('Undefined result');
-      last;
-    }
-    unless ($port->is_ok) {
-      $self->RETURN_INT($port->return_code);
+    unless ($port) {
+      SET_ERROR(&Errno::EFAULT, 'Bad address');
       last;
     }
     push @ret_val, $port;
   }
   sp_free_port_list(@list);
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, 'Port list building failed');
-    return \@ret_val;
-  }
   return \@ret_val;
 }
 

@@ -1,8 +1,7 @@
 use strict;
 use Test::More;
 
-use Sigrok::SerialPort qw( :const );
-use Sigrok::SerialPort::Backend qw( sp_get_port_by_name sp_free_port sp_list_ports sp_copy_port sp_free_port_list );
+use Sigrok::SerialPort qw( :all );
 
 my $portname = 'COM3';
 my @ports;

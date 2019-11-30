@@ -13,8 +13,7 @@ use IO::Handle;
 use Time::HiRes qw(sleep);  # for sleep function
 
 # cross platform serial port lib
-use Sigrok::SerialPort qw( :const );
-use Sigrok::SerialPort::Backend qw( :all );
+use Sigrok::SerialPort qw(:all);
 
 my $desired_port = "COM3";
 

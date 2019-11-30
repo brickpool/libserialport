@@ -20,10 +20,12 @@ INSTALLATION
 
 To install this module type the following:
 
-  perl Makefile.PL
-  make
-  make test
-  make install
+```
+perl Makefile.PL
+make
+make test
+make install
+```
 
 DEPENDENCIES
 ------------
@@ -35,7 +37,7 @@ This module requires these other modules and libraries:
 - libserialport
 
 The `examples/` directory contains simple serial programs by using the
-`Sigrok::SerialPort::Backend` module.
+`Sigrok::SerialPort` module.
 
 SEE ALSO
 --------

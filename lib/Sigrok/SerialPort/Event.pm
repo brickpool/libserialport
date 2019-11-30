@@ -4,11 +4,18 @@ use Moose;
 use MooseX::Params::Validate;
 use Carp qw( croak );
 
-use Sigrok::SerialPort::Backend qw(
+use Sigrok::SerialPort qw(
+  SP_OK
+
   sp_new_event_set
   sp_add_port_events
   sp_wait
   sp_free_event_set
+
+  sp_last_error_message
+);
+use Sigrok::SerialPort::Error qw(
+  SET_ERROR
 );
 
 extends 'Sigrok::SerialPort::Base';
@@ -26,16 +33,17 @@ has 'event_set' => (
   init_arg  => 'handle',
   reader    => 'get_handle',
   # private methods
-  predicate => '_has_handle',
   builder   => '_build_handle',
 );
 
 has 'timeout' => (
-  isa       => 'unsigned_int',
+  isa       => 'Maybe[unsigned_int]',
   required  => 1,
   init_arg  => 'undef',
   default   => 0,
   writer    => 'wait',
+  # private methods
+  trigger   => \&_trigger_wait,
 );
 
 ##
@@ -65,16 +73,6 @@ has '_mask' => (
 
 ##
 #
-# extends accessor methods
-#
-##
-
-after 'wait' => sub {
-  shift->_wait(@_);
-};
-
-##
-#
 # extends default methods
 #
 ##
@@ -94,7 +92,7 @@ sub BUILD {
 
 sub DEMOLISH {
   my $self = shift;
-  $self->_free_handle if $self->_has_handle;
+  $self->_free_handle if $self->get_handle;
 }
 
 ##
@@ -110,11 +108,12 @@ sub add_port_events
     { isa => 'Sigrok::SerialPort::Port' },
     { isa => 'sp_event' },
   );
-  $self->RETURN_INT(sp_add_port_events($self->get_handle, $port->get_handle, $mask));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
+  my $ret_code = sp_add_port_events($self->get_handle, $port->get_handle, $mask);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return 1;
 }
 
@@ -128,16 +127,41 @@ sub _build_handle
 {
   my $self = shift;
   my $ret_val;
-  $self->RETURN_INT(sp_new_event_set(\$ret_val));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-    return undef;
+  my $ret_code = sp_new_event_set(\$ret_val);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return 0;
   }
-  unless ($ret_val) {
-    $self->SET_FAIL('Undefined result');
-    return undef;
+  unless ($ret_val > 0) {
+    SET_ERROR(&Errno::EFAULT, 'Bad address');
+    return 0;
   }
   return $ret_val;
+}
+
+##
+#
+# private trigger methods
+#
+##
+
+sub _trigger_wait
+{
+  my $self = shift;
+  my ($new, $old) = pos_validated_list( \@_,
+    { isa => 'unsigned_int' },
+    { isa => 'unsigned_int', optional => 1 },
+  );
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  my $ret_code = sp_wait($self->get_handle, $new);
+  unless ($ret_code == SP_OK) {
+    SET_ERROR($ret_code);
+    return undef;
+  }
+  return $new;
 }
 
 ##
@@ -149,27 +173,13 @@ sub _build_handle
 sub _free_handle
 {
   my $self = shift;
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined event set');
-    return;
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
   }
   sp_free_event_set($self->get_handle);
-}
-
-sub _wait
-{
-  my $self = shift;
-  my ($timeout) = pos_validated_list( \@_,
-    { isa => 'unsigned_int' },
-  );
-  unless ($self->_has_handle) {
-    $self->SET_FAIL('Undefined event set');
-    return;
-  }
-  $self->RETURN_INT(sp_wait($self->get_handle, $timeout));
-  unless ($self->is_ok) {
-    $self->SET_ERROR($self->return_code, $self->last_error_message);
-  }
+  SET_ERROR(SP_OK);
+  return 1;
 }
 
 no Moose;

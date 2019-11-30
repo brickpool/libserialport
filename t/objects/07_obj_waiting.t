@@ -1,5 +1,5 @@
 use strict;
-use Test::More;
+use Test::More tests => 7;
 
 use Sigrok::SerialPort qw( :const );
 use Sigrok::SerialPort::List;
@@ -8,32 +8,41 @@ use Sigrok::SerialPort::Event;
 
 my $list;
 my $port;
+my $event;
 
 # get (first) port
-$list = Sigrok::SerialPort::List->new;
-ok $list->is_ok, 'List->new';
-if ($list->is_ok and not $list->ports->is_empty) {
-  $port = $list->ports->get(0);
+ok eval{ $list = Sigrok::SerialPort::List->new }, 'List->new';
+SKIP: {
+  skip 'Skipping Sigrok::SerialPort::List tests', 1
+    unless defined $list and not $list->ports->is_empty;
+
+  ok $port = $list->ports->get(0), 'List->ports->get';
 }
  
-if (defined $port)
-{
+SKIP: {
+  skip 'Skipping Sigrok::SerialPort::Port tests', 2
+    unless defined $port;
+
   # open
-  $port->open(SP_MODE_READ);
-  is $port->return_code, SP_OK, 'Port->open';
+  is $port->open(SP_MODE_READ), SP_MODE_READ, 'Port->open';
+  ok eval { $event = Sigrok::SerialPort::Event->new(port => $port, mask => SP_EVENT_TX_READY) }, 'Event->new';
+}
+
+SKIP: {
+  skip 'Skipping Sigrok::SerialPort::Event tests', 2
+    unless defined $event;
 
   # waiting
-  my $event;
-  $event = Sigrok::SerialPort::Event->new(port => $port, mask => SP_EVENT_TX_READY);
-  is $event->return_code, SP_OK, 'Event->new';
-  $event->add_port_events($port, SP_EVENT_RX_READY);
-  is $event->return_code, SP_OK, 'Event->add_port';
-  $event->wait(500);
-  is $event->return_code, SP_OK, 'Event->set_timeout';
+  is $event->add_port_events($port, SP_EVENT_RX_READY), SP_EVENT_RX_READY, 'Event->add_port';
+  is $event->wait(500), 500, 'Event->set_timeout';
+}
+
+SKIP: {
+  skip 'Skipping Sigrok::SerialPort::Port tests', 1
+    unless defined $port;
 
   # close
-  $port->close();
-  is $port->return_code, SP_OK, 'Port->close';
+  ok $port->close(), 'Port->close';
 }
   
 done_testing;

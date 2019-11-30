@@ -158,11 +158,9 @@ BOOT:
 
  ##
  #
- # Sigrok::SerialPort::Backend
+ # Typemaps
  # 
  ##
-
-MODULE = Sigrok__SerialPort   PACKAGE = Sigrok::SerialPort::Backend
 
 TYPEMAP: <<TYPEMAPS
 enum sp_return      T_ENUM
@@ -241,7 +239,7 @@ sp_free_port(port)
       sv_setsv(port, &PL_sv_undef);
       SvSETMAGIC(port);
     } else {
-      warn("Sigrok::SerialPort::Backend::sp_free_port: port is not of valid SCALAR");
+      warn("Sigrok::SerialPort::sp_free_port: port is not of valid SCALAR");
     }
   }
 
@@ -297,7 +295,7 @@ sp_free_port_list( ... )
     U32 ix_ports = 0;
   INIT:
     if (items < 1)
-      croak("Usage: Sigrok::SerialPort::Backend::sp_free_port_list(ports)");
+      croak("Usage: Sigrok::SerialPort::sp_free_port_list(ports)");
   CODE:
   {
     while (items--) {
@@ -308,7 +306,7 @@ sp_free_port_list( ... )
         sv_setiv(sv_port, 0);
         SvSETMAGIC(sv_port);
       } else {
-        warn("Sigrok::SerialPort::Backend::sp_free_port_list: ports has an invalid ARRAY entry");
+        warn("Sigrok::SerialPort::sp_free_port_list: ports has an invalid ARRAY entry");
       }
     }
   }
@@ -453,7 +451,7 @@ sp_free_config(config)
       sv_setsv(config, &PL_sv_undef);
       SvSETMAGIC((SV*)config);
     } else {
-      warn("Sigrok::SerialPort::Backend::sp_free_config: config is not of valid SCALAR");
+      warn("Sigrok::SerialPort::sp_free_config: config is not of valid SCALAR");
     }
   }
 
@@ -720,10 +718,10 @@ sp_blocking_read(port, buf, count, timeout_ms);
   INIT:
     SvGETMAGIC(buf);
     if (!SvROK(buf))
-      croak("Sigrok::SerialPort::Backend::sp_blocking_read_next: buf is not a reference");
+      croak("Sigrok::SerialPort::sp_blocking_read_next: buf is not a reference");
     buf = SvRV(buf);
     if (!SvPOK(buf))
-      croak("Sigrok::SerialPort::Backend::sp_blocking_read: buf is not a valid string reference");
+      croak("Sigrok::SerialPort::sp_blocking_read: buf is not a valid string reference");
   CODE:
   {
     /* We don't need the existing content of the buffer string */
@@ -731,7 +729,7 @@ sp_blocking_read(port, buf, count, timeout_ms);
     /* Generate a warning if the memory size (xpv_len) of the buffer is smaller than needed */
     xpv_len = SvLEN(buf);
     if (count >= xpv_len)
-      warn("Sigrok::SerialPort::Backend::sp_blocking_read: the size of buf is smaller than count.");
+      warn("Sigrok::SerialPort::sp_blocking_read: the size of buf is smaller than count.");
     /* SvGROW will automatically grow the buffer string for us */
     /* we add space for a trailing NUL like perl's own string functions */
     xpv_pv = SvGROW(buf, count + 1);
@@ -764,16 +762,16 @@ sp_blocking_read_next(port, buf, count, timeout_ms);
   INIT:
     SvGETMAGIC(buf);
     if (!SvROK(buf))
-      croak("Sigrok::SerialPort::Backend::sp_blocking_read_next: buf is not a reference");
+      croak("Sigrok::SerialPort::sp_blocking_read_next: buf is not a reference");
     buf = SvRV(buf);
     if (!SvPOK(buf))
-      croak("Sigrok::SerialPort::Backend::sp_blocking_read_next: buf is not a valid string reference");
+      croak("Sigrok::SerialPort::sp_blocking_read_next: buf is not a valid string reference");
   CODE:
   {
     SvPVCLEAR(buf);
     xpv_len = SvLEN(buf);
     if (count >= xpv_len)
-      warn("Sigrok::SerialPort::Backend::sp_blocking_read_next: the size of buf is smaller than count.");
+      warn("Sigrok::SerialPort::sp_blocking_read_next: the size of buf is smaller than count.");
     xpv_pv = SvGROW(buf, count + 1);
     xpv_pv[count] = '\0';
     count = sp_blocking_read_next(port, xpv_pv, count, timeout_ms);
@@ -799,16 +797,16 @@ sp_nonblocking_read(port, buf, count);
   INIT:
     SvGETMAGIC(buf);
     if (!SvROK(buf))
-      croak("Sigrok::SerialPort::Backend::sp_nonblocking_read: buf is not a reference");
+      croak("Sigrok::SerialPort::sp_nonblocking_read: buf is not a reference");
     buf = SvRV(buf);
     if (!SvPOK(buf))
-      croak("Sigrok::SerialPort::Backend::sp_nonblocking_read: buf is not a valid string reference");
+      croak("Sigrok::SerialPort::sp_nonblocking_read: buf is not a valid string reference");
   CODE:
   {
     SvPVCLEAR(buf);
     xpv_len = SvLEN(buf);
     if (count >= xpv_len)
-      warn("Sigrok::SerialPort::Backend::sp_nonblocking_read: the size of buf is smaller than count.");
+      warn("Sigrok::SerialPort::sp_nonblocking_read: the size of buf is smaller than count.");
     xpv_pv = SvGROW(buf, count + 1);
     xpv_pv[count] = '\0';
     count = sp_nonblocking_read(port, xpv_pv, count);
@@ -832,11 +830,11 @@ sp_blocking_write(port, buf, count, timeout_ms);
     char* xpv_pv;
   INIT:
     if (!SvPOK(buf))
-      croak("Sigrok::SerialPort::Backend::sp_blocking_write: buf is not a valid (packed) string");
+      croak("Sigrok::SerialPort::sp_blocking_write: buf is not a valid (packed) string");
     xpv_cur = SvCUR(buf);
     xpv_pv = SvPV_nolen(buf);
     if (count > xpv_cur) {
-      warn("Sigrok::SerialPort::Backend::sp_blocking_write: the amount of buf is smaller than count.");
+      warn("Sigrok::SerialPort::sp_blocking_write: the amount of buf is smaller than count.");
       count = xpv_cur;
     }
   CODE:
@@ -856,10 +854,10 @@ sp_nonblocking_write(port, buf, count);
     char* xpv_pv;
   INIT:
     if (!SvPOK(buf))
-      croak("Sigrok::SerialPort::Backend::sp_nonblocking_write: buf is not a valid (packed) string");
+      croak("Sigrok::SerialPort::sp_nonblocking_write: buf is not a valid (packed) string");
     xpv_cur = SvCUR(buf);
     if (count > xpv_cur) {
-      warn("Sigrok::SerialPort::Backend::sp_nonblocking_write: the amount of buf is smaller than count.");
+      warn("Sigrok::SerialPort::sp_nonblocking_write: the amount of buf is smaller than count.");
       count = xpv_cur;
     }
     xpv_pv = SvPV_nolen(buf);
@@ -930,7 +928,7 @@ sp_free_event_set(event_set)
       sv_setsv(event_set, &PL_sv_undef);
       SvSETMAGIC(event_set);
     } else {
-      warn("Sigrok::SerialPort::Backend::sp_free_event_set: event_set is not a valid SCALAR");
+      warn("Sigrok::SerialPort::sp_free_event_set: event_set is not a valid SCALAR");
     }
   }
 
@@ -999,7 +997,7 @@ sp_free_error_message(message);
       sv_setsv(message, &PL_sv_undef);
       SvSETMAGIC(message);
     } else {
-      warn("Sigrok::SerialPort::Backend::sp_free_error_message: message is not a string");
+      warn("Sigrok::SerialPort::sp_free_error_message: message is not a string");
     }
   }
 

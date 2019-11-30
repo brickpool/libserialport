@@ -2,7 +2,6 @@ use strict;
 use Test::More tests => 16;
 
 use Sigrok::SerialPort qw( :version );
-use Sigrok::SerialPort::Backend qw( :all );
 
 is SP_PACKAGE_VERSION_MAJOR, 0, "SP_PACKAGE_VERSION_MAJOR";
 is SP_PACKAGE_VERSION_MINOR, 1, "SP_PACKAGE_VERSION_MINOR";

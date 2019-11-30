@@ -1,8 +1,7 @@
 use strict;
 use Test::More tests => 6;
 
-use Sigrok::SerialPort qw( :const );
-use Sigrok::SerialPort::Backend qw( :all );
+use Sigrok::SerialPort qw( :all );
 
 my $port;
 my $message;
