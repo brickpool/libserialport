@@ -46,8 +46,7 @@ has 'port_list' => (
 #
 ##
 
-sub _build_port_list
-{
+sub _build_port_list {
   my $self = shift;
   my @list;
   my @ret_val = ();
@@ -65,10 +64,16 @@ sub _build_port_list
     push @ret_val, $port;
   }
   sp_free_port_list(@list);
+  SET_ERROR(SP_OK);
   return \@ret_val;
 }
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
+
+BEGIN {
+  exists &Errno::EFAULT or
+    die __PACKAGE__.' is not supported on this platform';
+}
 
 1;

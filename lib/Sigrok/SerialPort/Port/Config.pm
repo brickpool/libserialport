@@ -142,58 +142,49 @@ has 'flowcontrol' => (
 #
 ##
 
-around 'get_baudrate' => sub {
-  my ($next, $self) = @_;
+before 'get_baudrate' => sub {
+  my $self = shift;
   $self->{baudrate} = $self->_get_config_baudrate;
-  return $self->$next;
 };
 
-around 'get_bits' => sub {
-  my ($next, $self) = @_;
+before 'get_bits' => sub {
+  my $self = shift;
   $self->{bits} = $self->_get_config_bits;
-  return $self->$next;
 };
 
-around 'get_parity' => sub {
-  my ($next, $self) = @_;
+before 'get_parity' => sub {
+  my $self = shift;
   $self->{parity} = $self->_get_config_parity;
-  return $self->$next;
 };
 
-around 'get_stopbits' => sub {
-  my ($next, $self) = @_;
+before 'get_stopbits' => sub {
+  my $self = shift;
   $self->{stopbits} = $self->_get_config_stopbits;
-  return $self->$next;
 };
 
-around 'get_rts' => sub {
-  my ($next, $self) = @_;
+before 'get_rts' => sub {
+  my $self = shift;
   $self->{rts} = $self->_get_config_rts;
-  return $self->$next;
 };
 
-around 'get_cts' => sub {
-  my ($next, $self) = @_;
+before 'get_cts' => sub {
+  my $self = shift;
   $self->{cts} = $self->_get_config_cts;
-  return $self->$next;
 };
 
-around 'get_dtr' => sub {
-  my ($next, $self) = @_;
+before 'get_dtr' => sub {
+  my $self = shift;
   $self->{dtr} = $self->_get_config_dtr;
-  return $self->$next;
 };
 
-around 'get_dsr' => sub {
-  my ($next, $self) = @_;
+before 'get_dsr' => sub {
+  my $self = shift;
   $self->{dsr} = $self->_get_config_dsr;
-  return $self->$next;
 };
 
-around 'get_xon_xoff' => sub {
-  my ($next, $self) = @_;
+before 'get_xon_xoff' => sub {
+  my $self = shift;
   $self->{xon_xoff} = $self->_get_config_xon_xoff;
-  return $self->$next;
 };
 
 ##
@@ -213,8 +204,7 @@ sub DEMOLISH {
 #
 ##
 
-sub cget
-{
+sub cget {
   my $self = shift;
   my ($param) = pos_validated_list( \@_,
     { isa => 'Str' },
@@ -236,11 +226,11 @@ sub cget
             "(-baudrate|-bits|-parity|-stopbits|-rts|-cts|-dtr|-dsr|-xon_xoff) is required";
     }
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub configure
-{
+sub configure {
   my $self = shift;
   return qw('-baudrate' '-bits' '-parity' '-stopbits' '-rts' '-cts' '-dtr' '-dsr' '-xon_xoff') unless @_;
   my (%options) = validated_hash( \@_,
@@ -255,29 +245,29 @@ sub configure
     '-xon_xoff'    => { isa => 'sp_xonxoff',     optional => 1 },
     '-flowcontrol' => { isa => 'sp_flowcontrol', optional => 1 },
   );
+
+  $self->set_baudrate     ( $options{'-baudrate'}     ) if $options{'-baudrate'};
+    return undef if $ERRNO;
+  $self->set_bits         ( $options{'-bits'}         ) if $options{'-bits'};
+    return undef if $ERRNO;
+  $self->set_parity       ( $options{'-parity'}       ) if $options{'-parity'};
+    return undef if $ERRNO;
+  $self->set_stopbits     ( $options{'-stopbits'}     ) if $options{'-stopbits'};
+    return undef if $ERRNO;
+  $self->set_rts          ( $options{'-rts'}          ) if $options{'-rts'};
+    return undef if $ERRNO;
+  $self->set_rts          ( $options{'-cts'}          ) if $options{'-cts'};
+    return undef if $ERRNO;
+  $self->set_rts          ( $options{'-dtr'}          ) if $options{'-dtr'};
+    return undef if $ERRNO;
+  $self->set_rts          ( $options{'-dsr'}          ) if $options{'-dsr'};
+    return undef if $ERRNO;
+  $self->set_xon_xoff     ( $options{'-xon_xoff'}     ) if $options{'-xon_xoff'};
+    return undef if $ERRNO;
+  $self->set_flowcontrol  ( $options{'-flowcontrol'}  ) if $options{'-flowcontrol'};
+    return undef if $ERRNO;
+
   SET_ERROR(SP_OK);
-  {
-    $self->set_baudrate     ( $options{'-baudrate'}     ) if $options{'-baudrate'};
-    return undef if $ERRNO;
-    $self->set_bits         ( $options{'-bits'}         ) if $options{'-bits'};
-    return undef if $ERRNO;
-    $self->set_parity       ( $options{'-parity'}       ) if $options{'-parity'};
-    return undef if $ERRNO;
-    $self->set_stopbits     ( $options{'-stopbits'}     ) if $options{'-stopbits'};
-    return undef if $ERRNO;
-    $self->set_rts          ( $options{'-rts'}          ) if $options{'-rts'};
-    return undef if $ERRNO;
-    $self->set_rts          ( $options{'-cts'}          ) if $options{'-cts'};
-    return undef if $ERRNO;
-    $self->set_rts          ( $options{'-dtr'}          ) if $options{'-dtr'};
-    return undef if $ERRNO;
-    $self->set_rts          ( $options{'-dsr'}          ) if $options{'-dsr'};
-    return undef if $ERRNO;
-    $self->set_xon_xoff     ( $options{'-xon_xoff'}     ) if $options{'-xon_xoff'};
-    return undef if $ERRNO;
-    $self->set_flowcontrol  ( $options{'-flowcontrol'}  ) if $options{'-flowcontrol'};
-    return undef if $ERRNO;
-  }
   return 1;
 }
 
@@ -287,8 +277,7 @@ sub configure
 #
 ##
 
-sub _build_handle
-{
+sub _build_handle {
   my $self = shift;
   my $ret_val;
   my $ret_code = sp_new_config(\$ret_val);
@@ -300,6 +289,7 @@ sub _build_handle
     SET_ERROR(&Errno::EFAULT, 'Bad address');
     return 0;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
@@ -309,8 +299,7 @@ sub _build_handle
 #
 ##
 
-sub _trigger_baudrate
-{
+sub _trigger_baudrate {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_baudrate' },
@@ -325,11 +314,11 @@ sub _trigger_baudrate
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_bits
-{
+sub _trigger_bits {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_databits' },
@@ -344,11 +333,11 @@ sub _trigger_bits
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_parity
-{
+sub _trigger_parity {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_parity' },
@@ -363,11 +352,11 @@ sub _trigger_parity
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_stopbits
-{
+sub _trigger_stopbits {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_stopbits' },
@@ -382,11 +371,11 @@ sub _trigger_stopbits
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_rts
-{
+sub _trigger_rts {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_rts' },
@@ -401,11 +390,11 @@ sub _trigger_rts
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_cts
-{
+sub _trigger_cts {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_cts' },
@@ -420,11 +409,11 @@ sub _trigger_cts
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_dtr
-{
+sub _trigger_dtr {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_dtr' },
@@ -439,11 +428,11 @@ sub _trigger_dtr
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_dsr
-{
+sub _trigger_dsr {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_dsr' },
@@ -458,11 +447,11 @@ sub _trigger_dsr
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_xon_xoff
-{
+sub _trigger_xon_xoff {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_xonxoff' },
@@ -477,11 +466,11 @@ sub _trigger_xon_xoff
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_flowcontrol
-{
+sub _trigger_flowcontrol {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_flowcontrol' },
@@ -496,6 +485,7 @@ sub _trigger_flowcontrol
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
@@ -517,6 +507,7 @@ sub _get_config_baudrate {
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -532,6 +523,7 @@ sub _get_config_bits {
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -547,6 +539,7 @@ sub _get_config_parity {
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -562,6 +555,7 @@ sub _get_config_stopbits {
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -577,6 +571,7 @@ sub _get_config_rts {
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -592,6 +587,7 @@ sub _get_config_cts {
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -607,6 +603,7 @@ sub _get_config_dtr {
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -622,6 +619,7 @@ sub _get_config_dsr {
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -637,11 +635,11 @@ sub _get_config_xon_xoff {
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
-sub _free_config
-{
+sub _free_config {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -654,5 +652,11 @@ sub _free_config
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
+
+BEGIN {
+  exists &Errno::EBADF  and
+  exists &Errno::EFAULT or
+    die __PACKAGE__.' is not supported on this platform';
+}
 
 1;

@@ -56,8 +56,6 @@ has '_port' => (
   isa       => 'Sigrok::SerialPort::Port',
   init_arg  => 'port',
   # private methods
-  clearer   => '_clear_port',
-  predicate => '_has_port',
   reader    => '_get_port',
 );
 
@@ -65,8 +63,6 @@ has '_mask' => (
   isa       => 'sp_event',
   init_arg  => 'mask',
   # private methods
-  clearer   => '_clear_mask',
-  predicate => '_has_mask',
   reader    => '_get_mask',
 );
 
@@ -79,15 +75,16 @@ has '_mask' => (
 
 sub BUILD {
   my $self = shift;
-  if ($self->_has_port && $self->_has_mask) {
+  if (defined $self->{_port} and defined $self->{_mask}) {
     $self->add_port_events($self->_get_port, $self->_get_mask);
-  } elsif ($self->_has_port && not $self->_has_mask) {
-    $self->_clear_port;
+  } elsif (exists $self->{_port}) {
     croak 'Attribute (mask) is required if using (port)'
-  } elsif ($self->_has_mask && not $self->_has_port) {
-    $self->_clear_mask;
+  } elsif (exists $self->{_mask}) {
     croak 'Attribute (port) is required if using (mask)'
   }
+  # we don't need the helper attributes anymore
+  delete $self->{_port} if $self->_get_port;
+  delete $self->{_mask} if $self->_get_mask;
 }
 
 sub DEMOLISH {
@@ -101,13 +98,20 @@ sub DEMOLISH {
 #
 ##
 
-sub add_port_events
-{
+sub add_port_events {
   my $self = shift;
   my ($port, $mask) = pos_validated_list( \@_,
     { isa => 'Sigrok::SerialPort::Port' },
     { isa => 'sp_event' },
   );
+  unless ($self->get_handle) {
+    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    return undef;
+  }
+  unless ($port->get_handle) {
+    SET_ERROR(&Errno::EINVAL, 'Invalid argument');
+    return undef;
+  }
   my $ret_code = sp_add_port_events($self->get_handle, $port->get_handle, $mask);
   unless ($ret_code == SP_OK) {
     SET_ERROR($ret_code);
@@ -123,8 +127,7 @@ sub add_port_events
 #
 ##
 
-sub _build_handle
-{
+sub _build_handle {
   my $self = shift;
   my $ret_val;
   my $ret_code = sp_new_event_set(\$ret_val);
@@ -136,6 +139,7 @@ sub _build_handle
     SET_ERROR(&Errno::EFAULT, 'Bad address');
     return 0;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
@@ -145,8 +149,7 @@ sub _build_handle
 #
 ##
 
-sub _trigger_wait
-{
+sub _trigger_wait {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'unsigned_int' },
@@ -161,6 +164,7 @@ sub _trigger_wait
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
@@ -170,8 +174,7 @@ sub _trigger_wait
 #
 ##
 
-sub _free_handle
-{
+sub _free_handle {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -184,5 +187,12 @@ sub _free_handle
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
+
+BEGIN {
+  exists &Errno::EBADF  and
+  exists &Errno::EFAULT and
+  exists &Errno::EINVAL or
+    die __PACKAGE__.' is not supported on this platform';
+}
 
 1;

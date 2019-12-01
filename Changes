@@ -1,12 +1,16 @@
 Revision history for Perl extension Sigrok::SerialPort.
 
+0.0203  2019-12-01
+  - plattform tests for &Errno::'constants'
+  - bug fixing
+
 0.0202  2019-11-30
 	- use of $ERRNO/$! instead of croak/is_ok/return_code
-	- Adding package Sigrok::SerialPort::Error
-	- Move Sigrok::SerialPort::Backend to Sigrok::SerialPort
+	- adding package Sigrok::SerialPort::Error
+	- move Sigrok::SerialPort::Backend to Sigrok::SerialPort
 
 0.0201  2019-11-22
-	- Extending documentation
+	- extending documentation
 	- Adding examples
 
 0.0200  2019-10-30

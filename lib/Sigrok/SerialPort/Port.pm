@@ -7,7 +7,6 @@ use Carp qw( croak );
 
 use Sigrok::SerialPort qw(
   SP_OK
-  
   SP_ERR_ARG
   SP_ERR_SUPP
   
@@ -78,8 +77,6 @@ has 'port_handle' => (
   isa       => 'sp_port',
   init_arg  => 'undef',
   reader    => 'get_handle',
-  # private methods
-  writer    => '_set_handle',
 );
 
 ##
@@ -320,8 +317,6 @@ has '_copy_handle' => (
   init_arg  => 'handle',
   coerce    => 1,
   # private methods
-  clearer   => '_clear_copy_handle',
-  predicate => '_has_copy_handle',
   reader    => '_get_copy_handle',
 );
 
@@ -329,8 +324,6 @@ has '_name' => (
   isa       => 'Str',
   init_arg  => 'portname',
   # private methods
-  clearer   => '_clear_name',
-  predicate => '_has_name',
   reader    => '_get_name',
 );
 
@@ -416,17 +409,16 @@ sub BUILD {
   my $self = shift;
 
   # initialize the port first ..
-  my $handle;
-  if ($self->_has_copy_handle) {
-    $handle = $self->_build_copy_port;
-  } elsif ($self->_has_name) {
-    $handle = $self->_build_port_by_name;
+  if ($self->_get_copy_handle) {
+    $self->{port_handle} = $self->_build_copy_port;
+  } elsif (defined $self->_get_name) {
+    $self->{port_handle} = $self->_build_port_by_name;
   } else {
     croak 'Attribute (port|portname) is required';
   }
-  $self->_set_handle($handle) if $handle;
-  $self->_clear_copy_handle   if $self->_has_copy_handle;
-  $self->_clear_name          if $self->_has_name;
+  # we don't need the helper attributes anymore
+  delete $self->{_copy_handle}  if $self->_get_copy_handle;
+  delete $self->{_name}         if $self->_get_name;
 
   # .. next open the port
   if ($self->_has_mode) {
@@ -434,16 +426,14 @@ sub BUILD {
     $self->_set_as_open($ret_val ? 1 : 0);
   }
 
-  # .. configure the port if opened
+  # .. now configure the port if opened
   foreach ( qw(baudrate bits parity stopbits rts cts dtr dsr xonxoff flowcontrol) ) {
-    if (exists $self->{$_}) {
-      unless (defined $self->{$_}) {
-        delete $self->{$_};
-        next;
-      }
-      unless ($self->is_open) {
-        croak "Attribute (mode) is required if using ($_)";
-      }
+    next unless exists $self->{$_};
+    if (defined $self->{$_}) {
+      croak "Attribute (mode) is required if using ($_)" unless $self->is_open;
+    }
+    else {
+      delete $self->{$_};
     }
   }
   $self->_set_baudrate    ( $self->{baudrate}     ) if exists $self->{baudrate};
@@ -470,8 +460,7 @@ sub DEMOLISH {
 #
 ##
 
-sub open
-{
+sub open {
   my $self = shift;
   my ($mode) = pos_validated_list( \@_,
     { isa => 'sp_mode' },
@@ -479,36 +468,36 @@ sub open
   $self->_set_mode($mode);
   my $ret_val = $self->_open_port($self->get_mode);
   $self->_set_as_open($ret_val ? 1 : 0);
-  return undef unless defined $ret_val;
+  defined ($ret_val) or
+    return undef;
   return $self->is_open;
 }
 
-sub close
-{
+sub close {
   my $self = shift;
   my $ret_val = $self->_close_port;
   $self->_set_as_open(0);
   return $ret_val;
 }
 
-sub is_native
-{
+sub is_native {
   my $ret_val = shift->get_transport;
-  return undef unless defined $ret_val;
+  defined ($ret_val) or
+    return undef;
   return $ret_val == SP_TRANSPORT_NATIVE;
 }
 
-sub is_usb
-{
+sub is_usb {
   my $ret_val = shift->get_transport;
-  return undef unless defined $ret_val;
+  defined ($ret_val) or
+    return undef;
   return $ret_val == SP_TRANSPORT_USB;
 }
 
-sub is_bluetooth
-{
+sub is_bluetooth {
   my $ret_val = shift->get_transport;
-  return undef unless defined $ret_val;
+  defined ($ret_val) or
+    return undef;
   return $ret_val == SP_TRANSPORT_BLUETOOTH;
 }
 
@@ -533,23 +522,24 @@ sub get_usb {
       croak "Validation failed for 'option' with value $_ " .
             "(-bus|-address|-vid|-pid|-manufacturer|-product|-serial) is required";
     }
-    return undef unless defined $ret_val;
+    defined ($ret_val) or
+      return undef;
     push @ret_list, $ret_val;
   }
   return @ret_list;
 }
 
-sub cget
-{
+sub cget {
   my $self = shift;
-  return undef unless $self->_read_settings;
+  defined ($self->_read_settings) or
+    return undef;
   return $self->config->cget(@_)
 }
 
-sub configure
-{
+sub configure {
   my $self = shift;
-  return undef unless $self->_read_settings;
+  defined ($self->_read_settings) or
+    return undef;
   return $self->config->configure(@_);
 }
 
@@ -572,8 +562,7 @@ sub write_settings {
   return 1;
 };
 
-sub blocking_read
-{
+sub blocking_read {
   my $self = shift;
   my ($count, $timeout) = pos_validated_list( \@_,
     { isa => 'size_t'       },
@@ -589,11 +578,11 @@ sub blocking_read
     SET_ERROR($ret_val);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val, $ret_buf;
 }
 
-sub blocking_read_next
-{
+sub blocking_read_next {
   my $self = shift;
   my ($count, $timeout) = pos_validated_list( \@_,
     { isa => 'size_t'       },
@@ -609,11 +598,11 @@ sub blocking_read_next
     SET_ERROR($ret_val);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val, $ret_buf;
 }
 
-sub nonblocking_read
-{
+sub nonblocking_read {
   my $self = shift;
   my ($count) = pos_validated_list( \@_,
     { isa => 'size_t' },
@@ -628,11 +617,11 @@ sub nonblocking_read
     SET_ERROR($ret_val);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val, $ret_buf;
 }
 
-sub blocking_write
-{
+sub blocking_write {
   my $self = shift;
   my ($buf, $count, $timeout) = pos_validated_list( \@_,
     { isa => 'Str'          },
@@ -648,11 +637,11 @@ sub blocking_write
     SET_ERROR($ret_val);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub nonblocking_write
-{
+sub nonblocking_write {
   my $self = shift;
   my ($buf, $count) = pos_validated_list( \@_,
     { isa => 'Str'    },
@@ -667,11 +656,11 @@ sub nonblocking_write
     SET_ERROR($ret_val);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub input_waiting
-{
+sub input_waiting {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -682,11 +671,11 @@ sub input_waiting
     SET_ERROR($ret_val);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub output_waiting
-{
+sub output_waiting {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -697,6 +686,7 @@ sub output_waiting
     SET_ERROR($ret_val);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
@@ -715,8 +705,7 @@ sub drain {
   return 1;
 }
 
-sub start_break
-{
+sub start_break {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -731,8 +720,7 @@ sub start_break
   return 1;
 }
 
-sub end_break
-{
+sub end_break {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -753,10 +741,9 @@ sub end_break
 #
 ##
 
-sub _build_port_by_name
-{
+sub _build_port_by_name {
   my $self = shift;
-  unless ($self->_has_name) {
+  unless (defined $self->{_name}) {
     SET_ERROR(&Errno::ENOENT, 'No such file or directory');
     return 0;
   }
@@ -770,13 +757,13 @@ sub _build_port_by_name
     SET_ERROR(&Errno::EFAULT, 'Bad address');
     return 0;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub _build_copy_port
-{
+sub _build_copy_port {
   my $self = shift;
-  unless ($self->_has_copy_handle) {
+  unless (defined $self->{_copy_handle}) {
     SET_ERROR(&Errno::ENXIO, 'No such device or address');
     return 0;
   }
@@ -790,11 +777,11 @@ sub _build_copy_port
     SET_ERROR(&Errno::EFAULT, 'Bad address');
     return 0;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub _build_name
-{
+sub _build_name {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -805,11 +792,11 @@ sub _build_name
     SET_ERROR(&Errno::EFAULT, 'Bad address');
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub _build_description
-{
+sub _build_description {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -827,8 +814,7 @@ sub _build_config {
   return Sigrok::SerialPort::Port::Config->new;
 }
 
-sub _build_transport
-{
+sub _build_transport {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -839,11 +825,11 @@ sub _build_transport
     SET_ERROR($ret_val);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub _build_usb_bus
-{
+sub _build_usb_bus {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -859,11 +845,11 @@ sub _build_usb_bus
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub _build_usb_address
-{
+sub _build_usb_address {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -879,11 +865,11 @@ sub _build_usb_address
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub _build_usb_vid
-{
+sub _build_usb_vid {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -899,11 +885,11 @@ sub _build_usb_vid
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub _build_usb_pid
-{
+sub _build_usb_pid {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -919,11 +905,11 @@ sub _build_usb_pid
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub _build_usb_manufacturer
-{
+sub _build_usb_manufacturer {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -938,11 +924,11 @@ sub _build_usb_manufacturer
     SET_ERROR(&Errno::EFAULT, 'Bad address');
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub _build_usb_product
-{
+sub _build_usb_product {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -957,11 +943,11 @@ sub _build_usb_product
     SET_ERROR(&Errno::EFAULT, 'Bad address');
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub _build_usb_serial
-{
+sub _build_usb_serial {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -976,11 +962,11 @@ sub _build_usb_serial
     SET_ERROR(&Errno::EFAULT, 'Bad address');
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub _build_bluetooth_address
-{
+sub _build_bluetooth_address {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -995,11 +981,11 @@ sub _build_bluetooth_address
     SET_ERROR(&Errno::EFAULT, 'Bad address');
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub _build_native_handle
-{
+sub _build_native_handle {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -1011,11 +997,11 @@ sub _build_native_handle
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
-sub _build_signals
-{
+sub _build_signals {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -1027,6 +1013,7 @@ sub _build_signals
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
@@ -1036,8 +1023,7 @@ sub _build_signals
 #
 ##
 
-sub _trigger_baudrate
-{
+sub _trigger_baudrate {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_baudrate' },
@@ -1056,11 +1042,11 @@ sub _trigger_baudrate
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_bits
-{
+sub _trigger_bits {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_databits' },
@@ -1079,11 +1065,11 @@ sub _trigger_bits
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_parity
-{
+sub _trigger_parity {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_parity' },
@@ -1102,11 +1088,11 @@ sub _trigger_parity
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_stopbits
-{
+sub _trigger_stopbits {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_stopbits' },
@@ -1125,11 +1111,11 @@ sub _trigger_stopbits
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_rts
-{
+sub _trigger_rts {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_rts' },
@@ -1148,11 +1134,11 @@ sub _trigger_rts
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_cts
-{
+sub _trigger_cts {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_cts' },
@@ -1171,11 +1157,11 @@ sub _trigger_cts
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_dtr
-{
+sub _trigger_dtr {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_dtr' },
@@ -1194,11 +1180,11 @@ sub _trigger_dtr
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_dsr
-{
+sub _trigger_dsr {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_dsr' },
@@ -1217,11 +1203,11 @@ sub _trigger_dsr
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_xon_xoff
-{
+sub _trigger_xon_xoff {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_xonxoff' },
@@ -1240,11 +1226,11 @@ sub _trigger_xon_xoff
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_flowcontrol
-{
+sub _trigger_flowcontrol {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_flowcontrol' },
@@ -1263,11 +1249,11 @@ sub _trigger_flowcontrol
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 
-sub _trigger_flush
-{
+sub _trigger_flush {
   my $self = shift;
   my ($new, $old) = pos_validated_list( \@_,
     { isa => 'sp_buffer' },
@@ -1286,6 +1272,7 @@ sub _trigger_flush
     SET_ERROR($ret_code);
     return undef;
   }
+  SET_ERROR(SP_OK);
   return $new;
 }
 ##
@@ -1294,8 +1281,7 @@ sub _trigger_flush
 #
 ##
 
-sub _free_port
-{
+sub _free_port {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -1306,8 +1292,7 @@ sub _free_port
   return 1;
 }
 
-sub _open_port
-{
+sub _open_port {
   my $self = shift;
   my ($mode) = pos_validated_list( \@_,
     { isa => 'sp_mode' },
@@ -1325,8 +1310,7 @@ sub _open_port
   return 1;
 }
 
-sub _close_port
-{
+sub _close_port {
   my $self = shift;
   unless ($self->get_handle) {
     SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
@@ -1366,5 +1350,15 @@ sub _read_settings {
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
+
+BEGIN {
+  exists &Errno::ENOENT     and
+  exists &Errno::ENXIO      and
+  exists &Errno::EBADF      and
+  exists &Errno::EACCES     and
+  exists &Errno::EFAULT     and
+  exists &Errno::EOPNOTSUPP or
+    die __PACKAGE__.' is not supported on this platform';
+}
 
 1;

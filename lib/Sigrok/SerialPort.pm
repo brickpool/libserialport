@@ -5,11 +5,17 @@ use warnings;
 
 use Exporter;
 
-our $VERSION = 0.0202;
+our $VERSION = 0.0203;
 
 our @ISA = qw(Exporter);
 
-# This allows declaration	use Sigrok::SerialPort qw( :const :version );
+##
+# This allows declaration
+#
+#   use Sigrok::SerialPort qw(:enum :port :config :data :waiting :signal :error :version);
+#   use Sigrok::SerialPort ':all';
+#   use Sigrok::SerialPort ':const';
+##
 our %EXPORT_TAGS = (
   'enum' => [ qw(
     sp_get_port_by_name
@@ -216,8 +222,7 @@ __END__
 
 =head1 NAME
 
-Sigrok::SerialPort::Backend - XS module providing an interface to the API of the
-C library libserialport
+Sigrok::SerialPort - XS module providing an interface to the C library libserialport
 
 =head1 SYNOPSIS
 

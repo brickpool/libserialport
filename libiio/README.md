@@ -17,9 +17,11 @@ INSTALLATION
 To install this library for Sigrok::SerialPort automatically, enter the
 following:
 
-  perl Makefile.PL
-  make
-  make install
+```
+perl Makefile.PL
+make
+make install
+```
 
 PREPARE MANUALLY
 ----------------
@@ -27,39 +29,51 @@ PREPARE MANUALLY
 If the automatic download or unpacking fails, the library can be prepared
 manually for installation (Windows only):
 
-  powershell.exe -Command "Invoke-WebRequest http://swdownloads.analog.com/cse/build/libiio-win-deps.zip -OutFile libiio-win-deps.zip"
-  powershell.exe -Command "Expand-Archive -Force libiio-win-deps.zip"
+```
+powershell.exe -Command "Invoke-WebRequest http://swdownloads.analog.com/cse/build/libiio-win-deps.zip -OutFile libiio-win-deps.zip"
+powershell.exe -Command "Expand-Archive -Force libiio-win-deps.zip"
+```
 
 Alternatively, you can download the library files from github and prepare as
 follows (Windows only):
 
 ### (1) Get Header from github
 
-  if not exist "include" mkdir include
-  powershell.exe -Command "Invoke-WebRequest https://raw.githubusercontent.com/scottmudge/libserialport-cmake/master/libserialport.h -OutFile include/libserialport.h"
+```
+if not exist "include" mkdir include
+powershell.exe -Command "Invoke-WebRequest https://raw.githubusercontent.com/scottmudge/libserialport-cmake/master/libserialport.h -OutFile include/libserialport.h"
+```
   
 ### (2) Get and prepare MSWin32 library Version
 
-  powershell.exe -Command "Invoke-WebRequest https://github.com/analogdevicesinc/libiio/releases/download/v0.11/libiio-0.11.gcb2f40f-win32.zip -OutFile libiio.zip"
-  powershell.exe -Command "Expand-Archive -Force libiio.zip"
-  xcopy /Y libiio\libiio-win32\libserialport-0.dll libs\32\
+```
+powershell.exe -Command "Invoke-WebRequest https://github.com/analogdevicesinc/libiio/releases/download/v0.11/libiio-0.11.gcb2f40f-win32.zip -OutFile libiio.zip"
+powershell.exe -Command "Expand-Archive -Force libiio.zip"
+xcopy /Y libiio\libiio-win32\libserialport-0.dll libs\32\
+```
 
-  dlltool --as-flags=--32 -m i386 -z libs\32\libserialport-0.def --export-all-symbol libs\32\libserialport-0.dll
-  perl -i.bak -ape "s/\t(?!sp_).*\n//s" libs\32\libserialport-0.def
-  dlltool --as-flags=--32 -m i386 -d libs\32\libserialport-0.def -l libs\32\libserialport.dll.a -D libserialport-0.dll
+```
+dlltool --as-flags=--32 -m i386 -z libs\32\libserialport-0.def --export-all-symbol libs\32\libserialport-0.dll
+perl -i.bak -ape "s/\t(?!sp_).*\n//s" libs\32\libserialport-0.def
+dlltool --as-flags=--32 -m i386 -d libs\32\libserialport-0.def -l libs\32\libserialport.dll.a -D libserialport-0.dll
+```
 
 ### (3) Get MinGW-W64 build Version
 
-  if not exist "include" mkdir libs\64\
-  powershell.exe -Command "Invoke-WebRequest https://github.com/scottmudge/libserialport-cmake/raw/master/build_x64/libserialport.dll -OutFile libs\64\libserialport-0.dll"
-  powershell.exe -Command "Invoke-WebRequest https://github.com/scottmudge/libserialport-cmake/raw/master/build_x64/libserialport.dll.a -OutFile libs\64\libserialport.dll.a"
+```
+if not exist "include" mkdir libs\64\
+powershell.exe -Command "Invoke-WebRequest https://github.com/scottmudge/libserialport-cmake/raw/master/build_x64/libserialport.dll -OutFile libs\64\libserialport-0.dll"
+powershell.exe -Command "Invoke-WebRequest https://github.com/scottmudge/libserialport-cmake/raw/master/build_x64/libserialport.dll.a -OutFile libs\64\libserialport.dll.a"
+```
 
 ### (4) Generate Archive
 
-  xcopy /Y /S include\* libiio-win-deps\include\*
-  xcopy /Y /S libs\* libiio-win-deps\libs\*
-  if exist "libiio-win-deps.zip" del libiio-win-deps.zip
-  powershell.exe -Command "Compress-Archive -Path libiio-win-deps\* -CompressionLevel Optimal -DestinationPath libiio-win-deps.zip"
+```
+xcopy /Y /S include\* libiio-win-deps\include\*
+xcopy /Y /S libs\* libiio-win-deps\libs\*
+if exist "libiio-win-deps.zip" del libiio-win-deps.zip
+powershell.exe -Command "Compress-Archive -Path libiio-win-deps\* -CompressionLevel Optimal -DestinationPath libiio-win-deps.zip"
+```
 
 DEPENDENCIES
 ------------
@@ -76,10 +90,12 @@ SEE ALSO
 - <https://github.com/scottmudge/libserialport-cmake>
 
 AUTHOR
+------
 
 * J. Schneider <http://github.com/brickpool>
 
 COPYRIGHT AND LICENCE
+---------------------
 
 * Copyright (C) 2013, 2015 Martin Ling <martin-libserialport@earth.li>
 * Copyright (C) 2014 Uwe Hermann <uwe@hermann-uwe.de>

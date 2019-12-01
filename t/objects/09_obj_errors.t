@@ -2,12 +2,11 @@ use strict;
 use Test::More tests => 6;
 
 use Sigrok::SerialPort qw( :const );
-use Sigrok::SerialPort::Error qw( SET_ERROR );
+use Sigrok::SerialPort::Error qw( SET_ERROR last_error_code last_error_message set_debug );
 use Sigrok::SerialPort::Port;
 use Sigrok::SerialPort::Event;
 
 my $port;
-my $message;
 my $event;
 
 # init / generate error situation
@@ -16,17 +15,15 @@ ok eval { $event = Sigrok::SerialPort::Event->new(port => $port, mask => SP_EVEN
 is $event->wait(100) || SP_ERR_FAIL, SP_ERR_FAIL, 'Event->wait';
 
 ## error
-is Sigrok::SerialPort::Error::last_error_code(), 6, 'Error->last_error_code';
-$message = Sigrok::SerialPort::Error::last_error_message();
-ok defined $message && length $message > 0, 'Error->last_error_message';
+is last_error_code(), 6, 'last_error_code';
+ok length last_error_message() > 0, 'last_error_message';
 
 ## cleanup
-Sigrok::SerialPort::Error::set_debug(1);
+set_debug(1);
 undef $event;
-Sigrok::SerialPort::Error::set_debug(0);
+set_debug(0);
 undef $port;
 
-sub error_testing { ok SET_ERROR(SP_OK, "message"), 'SET_ERROR(err, msg)' }
-error_testing;
+ok SET_ERROR(SP_OK, "ok message"), 'SET_ERROR(err, msg)';
 
 done_testing;
