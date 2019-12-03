@@ -3,6 +3,8 @@ package Sigrok::SerialPort::Event;
 use Moose;
 use MooseX::Params::Validate;
 use Carp qw( croak );
+use English qw( -no_match_vars );
+use Errno qw( :POSIX );
 
 use Sigrok::SerialPort qw(
   SP_OK
@@ -76,7 +78,8 @@ has '_mask' => (
 sub BUILD {
   my $self = shift;
   if (defined $self->{_port} and defined $self->{_mask}) {
-    $self->add_port_events($self->_get_port, $self->_get_mask);
+    defined $self->add_port_events($self->_get_port, $self->_get_mask)
+      or croak $ERRNO;
   } elsif (exists $self->{_port}) {
     croak 'Attribute (mask) is required if using (port)'
   } elsif (exists $self->{_mask}) {
@@ -105,11 +108,13 @@ sub add_port_events {
     { isa => 'sp_event' },
   );
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   unless ($port->get_handle) {
-    SET_ERROR(&Errno::EINVAL, 'Invalid argument');
+    # One or more of the parameters specified by parameter list is invalid.
+    SET_ERROR(EINVAL); # Invalid argument
     return undef;
   }
   my $ret_code = sp_add_port_events($self->get_handle, $port->get_handle, $mask);
@@ -117,7 +122,6 @@ sub add_port_events {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return 1;
 }
 
@@ -136,10 +140,10 @@ sub _build_handle {
     return 0;
   }
   unless ($ret_val > 0) {
-    SET_ERROR(&Errno::EFAULT, 'Bad address');
+    # The value provided for the handle is not positive.
+    SET_ERROR(EFAULT); # Bad address
     return 0;
   }
-  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
@@ -156,7 +160,8 @@ sub _trigger_wait {
     { isa => 'unsigned_int', optional => 1 },
   );
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_wait($self->get_handle, $new);
@@ -164,7 +169,6 @@ sub _trigger_wait {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $new;
 }
 
@@ -177,22 +181,15 @@ sub _trigger_wait {
 sub _free_handle {
   my $self = shift;
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   sp_free_event_set($self->get_handle);
-  SET_ERROR(SP_OK);
   return 1;
 }
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
-
-BEGIN {
-  exists &Errno::EBADF  and
-  exists &Errno::EFAULT and
-  exists &Errno::EINVAL or
-    die __PACKAGE__.' is not supported on this platform';
-}
 
 1;

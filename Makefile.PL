@@ -27,12 +27,14 @@ WriteMakefile(
     'LWP::Simple'         => 0,
   },
   PREREQ_PM           => {
-    'Exporter'                  => 5.68,
     'strict'                    => 0,
     'warnings'                  => 0,
+    'Carp'                      => 1.32,
+    'English'                   => 0,
+    'Errno'                     => 0,
+    'Exporter'                  => 5.68,
     'Moose'                     => 2.1005,
     'MooseX::Params::Validate'  => 0.21,
-    'Carp'                      => 1.32,
     'XSLoader'                  => 0.15,
   },
   TEST_REQUIRES       => {

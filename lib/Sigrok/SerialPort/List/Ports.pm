@@ -1,6 +1,7 @@
 package Sigrok::SerialPort::List::Ports;
 
 use Moose;
+use Errno qw( :POSIX );
 
 use Sigrok::SerialPort qw(
   SP_OK
@@ -55,25 +56,22 @@ sub _build_port_list {
     SET_ERROR($ret_code);
     return \@ret_val;
   }
+  SET_ERROR(SP_OK);
   foreach my $handle ( @list ) {
-    my $port = Sigrok::SerialPort::Port->new(handle => $handle);
+    my $port;
+    eval { $port = Sigrok::SerialPort::Port->new(handle => $handle) };
     unless ($port) {
-      SET_ERROR(&Errno::EFAULT, 'Bad address');
+      # The value has not a valid port descriptor.
+      SET_ERROR(EBADF); # Bad file descriptor
       last;
     }
     push @ret_val, $port;
   }
   sp_free_port_list(@list);
-  SET_ERROR(SP_OK);
   return \@ret_val;
 }
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
-
-BEGIN {
-  exists &Errno::EFAULT or
-    die __PACKAGE__.' is not supported on this platform';
-}
 
 1;

@@ -1,5 +1,10 @@
 Revision history for Perl extension Sigrok::SerialPort.
 
+0.0204  2019-12-03
+	- extending documentation
+  - adding POD tests
+  - cleanup new/configure/cget/get_usb
+
 0.0203  2019-12-01
   - plattform tests for &Errno::'constants'
   - bug fixing
@@ -11,7 +16,7 @@ Revision history for Perl extension Sigrok::SerialPort.
 
 0.0201  2019-11-22
 	- extending documentation
-	- Adding examples
+	- adding examples
 
 0.0200  2019-10-30
 	- SerialPort OOP Class, created with Moose

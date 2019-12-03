@@ -4,6 +4,7 @@ use Moose;
 use MooseX::Params::Validate;
 use Carp qw( croak );
 use English qw( -no_match_vars );
+use Errno qw( :POSIX );
 
 use Sigrok::SerialPort qw(
   SP_OK
@@ -206,33 +207,34 @@ sub DEMOLISH {
 
 sub cget {
   my $self = shift;
-  my ($param) = pos_validated_list( \@_,
+  my ($option) = pos_validated_list( \@_,
     { isa => 'Str' },
   );
-  $param =~ s/^\b/\-/;  # option => -option
+  $option =~ s/^\b/\-/;  # option => -option
   my $ret_val;
-  for ($param) {
-    if    (/^-baudrate$/) { $ret_val = $self->get_baudrate; } # when
-    elsif (/^-bits$/    ) { $ret_val = $self->get_bits;     } # when
-    elsif (/^-parity$/  ) { $ret_val = $self->get_parity;   } # when
-    elsif (/^-stopbits$/) { $ret_val = $self->get_stopbits; } # when
-    elsif (/^-rts$/     ) { $ret_val = $self->get_rts;      } # when
-    elsif (/^-cts$/     ) { $ret_val = $self->get_cts;      } # when
-    elsif (/^-dtr$/     ) { $ret_val = $self->get_dtr;      } # when
-    elsif (/^-dsr$/     ) { $ret_val = $self->get_dsr;      } # when
-    elsif (/^-xon_xoff$/) { $ret_val = $self->get_xon_xoff; } # when
-    else                  {                                   # default
+  SWITCH: for ($option) {
+    /^-baudrate$/ && do { $ret_val = $self->get_baudrate; last SWITCH };
+    /^-bits$/     && do { $ret_val = $self->get_bits;     last SWITCH };
+    /^-parity$/   && do { $ret_val = $self->get_parity;   last SWITCH };
+    /^-stopbits$/ && do { $ret_val = $self->get_stopbits; last SWITCH };
+    /^-rts$/      && do { $ret_val = $self->get_rts;      last SWITCH };
+    /^-cts$/      && do { $ret_val = $self->get_cts;      last SWITCH };
+    /^-dtr$/      && do { $ret_val = $self->get_dtr;      last SWITCH };
+    /^-dsr$/      && do { $ret_val = $self->get_dsr;      last SWITCH };
+    /^-xon_xoff$/ && do { $ret_val = $self->get_xon_xoff; last SWITCH };
+    {
       croak "Validation failed for 'option' with value $_ " .
             "(-baudrate|-bits|-parity|-stopbits|-rts|-cts|-dtr|-dsr|-xon_xoff) is required";
     }
   }
-  SET_ERROR(SP_OK);
+  defined ($ret_val)
+    or return undef;
   return $ret_val;
 }
 
 sub configure {
   my $self = shift;
-  return qw('-baudrate' '-bits' '-parity' '-stopbits' '-rts' '-cts' '-dtr' '-dsr' '-xon_xoff') unless @_;
+  return qw(-baudrate -bits -parity -stopbits -rts -cts -dtr -dsr -xon_xoff -flowcontrol) unless @_;
   my (%options) = validated_hash( \@_,
     '-baudrate'    => { isa => 'sp_baudrate',    optional => 1 },
     '-bits'        => { isa => 'sp_databits',    optional => 1 },
@@ -245,29 +247,22 @@ sub configure {
     '-xon_xoff'    => { isa => 'sp_xonxoff',     optional => 1 },
     '-flowcontrol' => { isa => 'sp_flowcontrol', optional => 1 },
   );
-
-  $self->set_baudrate     ( $options{'-baudrate'}     ) if $options{'-baudrate'};
-    return undef if $ERRNO;
-  $self->set_bits         ( $options{'-bits'}         ) if $options{'-bits'};
-    return undef if $ERRNO;
-  $self->set_parity       ( $options{'-parity'}       ) if $options{'-parity'};
-    return undef if $ERRNO;
-  $self->set_stopbits     ( $options{'-stopbits'}     ) if $options{'-stopbits'};
-    return undef if $ERRNO;
-  $self->set_rts          ( $options{'-rts'}          ) if $options{'-rts'};
-    return undef if $ERRNO;
-  $self->set_rts          ( $options{'-cts'}          ) if $options{'-cts'};
-    return undef if $ERRNO;
-  $self->set_rts          ( $options{'-dtr'}          ) if $options{'-dtr'};
-    return undef if $ERRNO;
-  $self->set_rts          ( $options{'-dsr'}          ) if $options{'-dsr'};
-    return undef if $ERRNO;
-  $self->set_xon_xoff     ( $options{'-xon_xoff'}     ) if $options{'-xon_xoff'};
-    return undef if $ERRNO;
-  $self->set_flowcontrol  ( $options{'-flowcontrol'}  ) if $options{'-flowcontrol'};
-    return undef if $ERRNO;
-
-  SET_ERROR(SP_OK);
+  foreach my $key ( qw(-baudrate -bits -parity -stopbits -rts -cts -dtr -dsr -xon_xoff -flowcontrol) ) {
+    next unless exists $options{$key};
+    my $value = $options{$key};
+    SWITCH: for ($key) {
+      /^-baudrate$/     && do { defined $self->set_baudrate($value)     or return undef; last SWITCH };
+      /^-bits$/         && do { defined $self->set_bits($value)         or return undef; last SWITCH };
+      /^-parity$/       && do { defined $self->set_parity($value)       or return undef; last SWITCH };
+      /^-stopbits$/     && do { defined $self->set_stopbits($value)     or return undef; last SWITCH };
+      /^-rts$/          && do { defined $self->set_rts($value)          or return undef; last SWITCH };
+      /^-cts$/          && do { defined $self->set_cts($value)          or return undef; last SWITCH };
+      /^-dtr$/          && do { defined $self->set_dtr($value)          or return undef; last SWITCH };
+      /^-dsr$/          && do { defined $self->set_dsr($value)          or return undef; last SWITCH };
+      /^-xon_xoff$/     && do { defined $self->set_xon_xoff($value)     or return undef; last SWITCH };
+      /^-flowcontrol$/  && do { defined $self->set_flowcontrol($value)  or return undef; last SWITCH };
+    }
+  }
   return 1;
 }
 
@@ -286,10 +281,10 @@ sub _build_handle {
     return 0;
   }
   unless ($ret_val > 0) {
-    SET_ERROR(&Errno::EFAULT, 'Bad address');
+    # The value provided for the handle is not positive.
+    SET_ERROR(EFAULT); # Bad address
     return 0;
   }
-  SET_ERROR(SP_OK);
   return $ret_val;
 }
 
@@ -306,7 +301,8 @@ sub _trigger_baudrate {
     { isa => 'sp_baudrate', optional => 1 },
   );
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_set_config_baudrate($self->get_handle, $new);
@@ -314,7 +310,6 @@ sub _trigger_baudrate {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $new;
 }
 
@@ -325,7 +320,8 @@ sub _trigger_bits {
     { isa => 'sp_databits', optional => 1 },
   );
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_set_config_bits($self->get_handle, $new);
@@ -333,7 +329,6 @@ sub _trigger_bits {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $new;
 }
 
@@ -344,7 +339,8 @@ sub _trigger_parity {
     { isa => 'sp_parity', optional => 1 },
   );
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_set_config_parity($self->get_handle, $new);
@@ -352,7 +348,6 @@ sub _trigger_parity {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $new;
 }
 
@@ -363,7 +358,8 @@ sub _trigger_stopbits {
     { isa => 'sp_stopbits', optional => 1 },
   );
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_set_config_stopbits($self->get_handle, $new);
@@ -371,7 +367,6 @@ sub _trigger_stopbits {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $new;
 }
 
@@ -382,7 +377,8 @@ sub _trigger_rts {
     { isa => 'sp_rts', optional => 1 },
   );
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_set_config_rts($self->get_handle, $new);
@@ -390,7 +386,6 @@ sub _trigger_rts {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $new;
 }
 
@@ -401,7 +396,8 @@ sub _trigger_cts {
     { isa => 'sp_cts', optional => 1 },
   );
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_set_config_cts($self->get_handle, $new);
@@ -409,7 +405,6 @@ sub _trigger_cts {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $new;
 }
 
@@ -420,7 +415,8 @@ sub _trigger_dtr {
     { isa => 'sp_dtr', optional => 1 },
   );
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_set_config_dtr($self->get_handle, $new);
@@ -428,7 +424,6 @@ sub _trigger_dtr {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $new;
 }
 
@@ -439,7 +434,8 @@ sub _trigger_dsr {
     { isa => 'sp_dsr', optional => 1 },
   );
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_set_config_dsr($self->get_handle, $new);
@@ -447,7 +443,6 @@ sub _trigger_dsr {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $new;
 }
 
@@ -458,7 +453,8 @@ sub _trigger_xon_xoff {
     { isa => 'sp_xonxoff', optional => 1 },
   );
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_set_config_xon_xoff($self->get_handle, $new);
@@ -466,7 +462,6 @@ sub _trigger_xon_xoff {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $new;
 }
 
@@ -477,7 +472,8 @@ sub _trigger_flowcontrol {
     { isa => 'sp_flowcontrol', optional => 1 },
   );
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_set_config_flowcontrol($self->get_handle, $new);
@@ -485,7 +481,6 @@ sub _trigger_flowcontrol {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $new;
 }
 
@@ -499,7 +494,8 @@ sub _get_config_baudrate {
   my $self = shift;
   my $ret_val;
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_get_config_baudrate($self->get_handle, \$ret_val);
@@ -507,7 +503,6 @@ sub _get_config_baudrate {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -515,7 +510,8 @@ sub _get_config_bits {
   my $self = shift;
   my $ret_val;
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_get_config_bits($self->get_handle, \$ret_val);
@@ -523,7 +519,6 @@ sub _get_config_bits {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -531,7 +526,8 @@ sub _get_config_parity {
   my $self = shift;
   my $ret_val;
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_get_config_parity($self->get_handle, \$ret_val);
@@ -539,7 +535,6 @@ sub _get_config_parity {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -547,7 +542,8 @@ sub _get_config_stopbits {
   my $self = shift;
   my $ret_val;
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_get_config_stopbits($self->get_handle, \$ret_val);
@@ -555,7 +551,6 @@ sub _get_config_stopbits {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -563,7 +558,8 @@ sub _get_config_rts {
   my $self = shift;
   my $ret_val;
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_get_config_rts($self->get_handle, \$ret_val);
@@ -571,7 +567,6 @@ sub _get_config_rts {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -579,7 +574,8 @@ sub _get_config_cts {
   my $self = shift;
   my $ret_val;
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_get_config_cts($self->get_handle, \$ret_val);
@@ -587,7 +583,6 @@ sub _get_config_cts {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -595,7 +590,8 @@ sub _get_config_dtr {
   my $self = shift;
   my $ret_val;
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_get_config_dtr($self->get_handle, \$ret_val);
@@ -603,7 +599,6 @@ sub _get_config_dtr {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -611,7 +606,8 @@ sub _get_config_dsr {
   my $self = shift;
   my $ret_val;
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_get_config_dsr($self->get_handle, \$ret_val);
@@ -619,7 +615,6 @@ sub _get_config_dsr {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
@@ -627,7 +622,8 @@ sub _get_config_xon_xoff {
   my $self = shift;
   my $ret_val;
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   my $ret_code = sp_get_config_xon_xoff($self->get_handle, \$ret_val);
@@ -635,28 +631,21 @@ sub _get_config_xon_xoff {
     SET_ERROR($ret_code);
     return undef;
   }
-  SET_ERROR(SP_OK);
   return $ret_val;
 };
 
 sub _free_config {
   my $self = shift;
   unless ($self->get_handle) {
-    SET_ERROR(&Errno::EBADF, 'Bad file descriptor');
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
     return undef;
   }
   sp_free_config($self->get_handle);
-  SET_ERROR(SP_OK);
   return 1;
 }
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
-
-BEGIN {
-  exists &Errno::EBADF  and
-  exists &Errno::EFAULT or
-    die __PACKAGE__.' is not supported on this platform';
-}
 
 1;

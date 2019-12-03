@@ -37,3 +37,4 @@ t/objects/05_obj_config.t
 t/objects/07_obj_waiting.t
 t/objects/08_obj_signals.t
 t/objects/09_obj_errors.t
+xt/pod.t

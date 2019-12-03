@@ -34,7 +34,7 @@ SKIP: {
 
   # get and set config
   my ($opt, $val);
-  is scalar (@_ = $port->configure), 9,         'Port->configure()';
+  is scalar (@_ = $port->configure), 10,        'Port->configure()';
   ok $port->configure(-baudrate => 9600),       'Port->configure(-baudrate => ...)';
   ok $port->write_settings,                     'Port->write_settings';
   is $port->cget('-baudrate'), 9600,            'Port->cget(-baudrate)';

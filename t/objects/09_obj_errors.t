@@ -24,6 +24,6 @@ undef $event;
 set_debug(0);
 undef $port;
 
-ok SET_ERROR(SP_OK, "ok message"), 'SET_ERROR(err, msg)';
+ok SET_ERROR(SP_OK, SP_OK), 'SET_ERROR(err, extended)';
 
 done_testing;

@@ -5,7 +5,7 @@ use warnings;
 
 use Exporter;
 
-our $VERSION = 0.0203;
+our $VERSION = 0.0204;
 
 our @ISA = qw(Exporter);
 
