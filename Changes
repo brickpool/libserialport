@@ -1,5 +1,9 @@
 Revision history for Perl extension Sigrok::SerialPort.
 
+0.0205  2019-12-06
+	- extending documentation
+  - create additional getter methods for signaling
+
 0.0204  2019-12-03
 	- extending documentation
   - adding POD tests

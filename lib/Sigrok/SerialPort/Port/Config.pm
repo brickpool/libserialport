@@ -33,8 +33,6 @@ use Sigrok::SerialPort qw(
   sp_get_config_xon_xoff
   sp_set_config_xon_xoff
   sp_set_config_flowcontrol
-
-  sp_last_error_message
 );
 use Sigrok::SerialPort::Error qw(
   SET_ERROR
@@ -60,6 +58,7 @@ has 'config_handle' => (
 
 has 'baudrate' => (
   isa       => 'Maybe[sp_baudrate]',
+  default   => -1,
   reader    => 'get_baudrate',
   writer    => 'set_baudrate',
   # private methods
@@ -68,6 +67,7 @@ has 'baudrate' => (
 
 has 'bits' => (
   isa       => 'Maybe[sp_databits]',
+  default   => -1,
   reader    => 'get_bits',
   writer    => 'set_bits',
   # private methods
@@ -76,6 +76,7 @@ has 'bits' => (
 
 has 'parity' => (
   isa       => 'Maybe[sp_parity]',
+  default   => -1,
   reader    => 'get_parity',
   writer    => 'set_parity',
   # private methods
@@ -84,6 +85,7 @@ has 'parity' => (
 
 has 'stopbits' => (
   isa       => 'Maybe[sp_stopbits]',
+  default   => -1,
   reader    => 'get_stopbits',
   writer    => 'set_stopbits',
   # private methods
@@ -92,6 +94,7 @@ has 'stopbits' => (
 
 has 'rts' => (
   isa       => 'Maybe[sp_rts]',
+  default   => -1,
   reader    => 'get_rts',
   writer    => 'set_rts',
   # private methods
@@ -100,6 +103,7 @@ has 'rts' => (
 
 has 'cts' => (
   isa       => 'Maybe[sp_cts]',
+  default   => -1,
   reader    => 'get_cts',
   writer    => 'set_cts',
   # private methods
@@ -108,6 +112,7 @@ has 'cts' => (
 
 has 'dtr' => (
   isa       => 'Maybe[sp_dtr]',
+  default   => -1,
   reader    => 'get_dtr',
   writer    => 'set_dtr',
   # private methods
@@ -116,6 +121,7 @@ has 'dtr' => (
 
 has 'dsr' => (
   isa       => 'Maybe[sp_dsr]',
+  default   => -1,
   reader    => 'get_dsr',
   writer    => 'set_dsr',
   # private methods
@@ -124,6 +130,7 @@ has 'dsr' => (
 
 has 'xon_xoff' => (
   isa       => 'Maybe[sp_xonxoff]',
+  default   => -1,
   reader    => 'get_xon_xoff',
   writer    => 'set_xon_xoff',
   # private methods
@@ -234,7 +241,15 @@ sub cget {
 
 sub configure {
   my $self = shift;
-  return qw(-baudrate -bits -parity -stopbits -rts -cts -dtr -dsr -xon_xoff -flowcontrol) unless @_;
+  unless (@_) {
+    unless ($self->get_handle) {
+      # The value of the config argument is invalid.
+      SET_ERROR(ENXIO); # No such device or address
+      return undef;
+    }
+    my @ret_val = qw(-baudrate -bits -parity -stopbits -rts -cts -dtr -dsr -xon_xoff -flowcontrol);
+    return wantarray ? @ret_val : scalar @ret_val;
+  }
   my (%options) = validated_hash( \@_,
     '-baudrate'    => { isa => 'sp_baudrate',    optional => 1 },
     '-bits'        => { isa => 'sp_databits',    optional => 1 },
@@ -247,9 +262,8 @@ sub configure {
     '-xon_xoff'    => { isa => 'sp_xonxoff',     optional => 1 },
     '-flowcontrol' => { isa => 'sp_flowcontrol', optional => 1 },
   );
-  foreach my $key ( qw(-baudrate -bits -parity -stopbits -rts -cts -dtr -dsr -xon_xoff -flowcontrol) ) {
-    next unless exists $options{$key};
-    my $value = $options{$key};
+  my $cnt = 0;
+  while ( my ($key, $value) = each %options ) {
     SWITCH: for ($key) {
       /^-baudrate$/     && do { defined $self->set_baudrate($value)     or return undef; last SWITCH };
       /^-bits$/         && do { defined $self->set_bits($value)         or return undef; last SWITCH };
@@ -262,8 +276,9 @@ sub configure {
       /^-xon_xoff$/     && do { defined $self->set_xon_xoff($value)     or return undef; last SWITCH };
       /^-flowcontrol$/  && do { defined $self->set_flowcontrol($value)  or return undef; last SWITCH };
     }
+    $cnt++
   }
-  return 1;
+  return wantarray ? values %options : $cnt;
 }
 
 ##
@@ -649,3 +664,200 @@ no Moose;
 __PACKAGE__->meta->make_immutable;
 
 1;
+
+__END__
+
+=head1 NAME
+
+Sigrok::SerialPort::Config - represents a port configuration.
+
+=head1 SYNOPSIS
+
+  use Sigrok::SerialPort::Port;
+  
+  my $port;
+  eval { $port = Sigrok::SerialPort::Port->new(portname => 'COM3') }
+    or die @_;
+  for ($port->config) {
+    printf("Baudrate: %d\n", $_->cget('-baudrate'));
+    printf("Bits:     %d\n", $_->cget('-bits')    );
+    printf("Parity:   %d\n", $_->cget('-parity')  );
+    printf("Stopbits: %d\n", $_->cget('-stopbits'));
+  }
+
+=head1 DESCRIPTION
+
+The C<Sigrok::SerialPort::Config> module setting and querying serial port
+parameters (baud rate, parity, etc.).
+
+Usually the objects of type C<Sigrok::SerialPort::Config> are not created
+directly by the user. The object of the type C<Sigrok::SerialPort::Port> is
+responsible for this. 
+
+The I<values> provided by the configuration methods are documented in detail in
+the C<Sigrok::SerialPort::Base> package.
+
+=head2 EXPORT
+
+=over 12
+
+=item C<new()>
+
+=item C<< new(I<< '-option' => value, '-option' => value, ... >>) >>
+
+The constructor C<new> return a new configuration object. The constructor
+internally allocates an structure of type C<sp_config>. 
+
+  $obj = Sigrok::SerialPort::Config->new;
+
+If required, I<< -option => value >> pairs can be passed by the constructor. 
+
+=item C<< @list = configure('-option' => valueI<< , '-option' => value,
+... >>) >>
+
+=item C<< $scalar = configure('-option' => valueI<< , '-option' => value,
+... >>) >>
+
+Sets the values of I<-option> to I<value> for each I<< '-option' => value >>
+pair. Valid options are C<-baudrate, -bits, -parity, -stopbits, -rts, -cts,
+-dtr, -dsr, -xon_xoff, -flowcontrol>. The C<'> character is necessary due to
+perl's parsing rules.
+
+  $port->config->configure('-baudrate' => 9600, '-bits' => 8) || die $!;
+  $port->write_settings || die $!;
+
+In the list context, all applied values of the options are returned. In scalar
+context, the number of options is returned. If an error occurs, C<undef> is
+returned.
+
+Please note that the C<configure> method does not implicit apply the options to
+a serial port. This must be done by an C<Sigrok::SerialPort::Port> object.
+
+=item C<@list = configure()>
+
+=item C<$scalar = configure()>
+
+In the list context, all valid options are returned. In scalar context, the
+number of options is returned. If an error occurs, C<undef> is returned.
+
+  print 'configure returns ', scalar $obj->configure, " number of options.\n";
+  print "valid options are: \n";
+  print join "\n", $obj->configure;
+
+=item C<cget('-options')>
+
+Returns the current value of C<-option> of a configuration object. C<cget>
+returned C<undef> if an error occurs. 
+
+  $baud = $port->config->cget('-baudrate') || die $!;
+
+Valid options are C<-baudrate, -bits, -parity, -stopbits, -rts, -cts, -dtr,
+-dsr, -xon_xoff>. The C<'> character is necessary due to perl's parsing rules.
+
+Please note that the C<cget> method does not read the option from a serial port.
+This must be done by an C<Sigrok::SerialPort::Port> object.
+
+=item C<set_baudrate($baudrate)>
+
+=item C<set_bits($bits)>
+
+=item C<set_parity($parity)>
+
+=item C<set_stopbits($stopbits)>
+
+=item C<set_rts($rts)>
+
+=item C<set_cts($cts)>
+
+=item C<set_dtr($dtr)>
+
+=item C<set_dsr($dsr)>
+
+=item C<set_xon_xoff($xon_xoff)>
+
+=item C<set_flowcontrol($flowcontrol)>
+
+Standard set methods. Alias for C<< configure('-option' => value) >>.
+
+  # $obj->configure('-baudrate' => 9600) || die $!;
+  $obj->set_baudrate(9600) || die $!;
+
+The set methods return the specified value or C<undef> if an error occurs.
+
+=item C<get_baudrate()>
+
+=item C<get_bits()>
+
+=item C<get_parity()>
+
+=item C<get_stopbits()>
+
+=item C<get_rts()>
+
+=item C<get_cts()>
+
+=item C<get_dtr()>
+
+=item C<get_dsr()>
+
+=item C<get_xon_xoff()>
+
+Standard get methods. Alias for C<cget('-option')>.
+
+  # $baud = $obj->cget('-baudrate') || die $!;
+  $baud = $obj->get_baudrate() || die $!;
+
+The get methods returned C<undef> if an error occurs.
+
+=item C<get_handle()>
+C<get_handle> gives you access to the internal structure of type C<sp_config>. 
+The assigned internal structure is automatically created by the C<new>
+constructor and freeded by the destructor.
+
+  $handle = $obj->get_handle() || die $!;
+
+The handle can be used for direct libserialport API calls to the
+C<Sigrok::SerialPort> backend library.
+
+=back
+
+=head1 SEE ALSO
+
+Please see those websites for more information related to the library API.
+
+=over 4
+
+=item *
+
+L<Sigrok|http://sigrok.org/wiki/Libserialport>
+
+=item *
+
+L<github|https://github.com/sigrokproject/libserialport>
+
+=back
+
+=head1 SOURCE
+
+Source repository is at L<https://github.com/brickpool/libserialport>.
+
+=head1 AUTHOR
+
+J. Schneider L<https://github.com/brickpool>
+
+=head1 COPYRIGHT AND LICENSE
+
+=over 4
+
+=item *
+
+Copyright (C) 2019 J. Schneider L<https://github.com/brickpool>
+
+=back
+
+This library is free software: you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+=cut

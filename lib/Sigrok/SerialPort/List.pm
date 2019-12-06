@@ -30,9 +30,8 @@ Sigrok::SerialPort::List - obtaining a list of serial ports on the system
   use Sigrok::SerialPort::List;
   
   my $list;
-  eval {
-    $list = Sigrok::SerialPort::List->new;
-  } or die $@;
+  eval { $list = Sigrok::SerialPort::List->new }
+    or die $@;
   foreach my $port ( $list->ports->elements ) {
     print 'Port found: ', $port->get_name(), "\n";
   }
@@ -60,6 +59,13 @@ occurred, an exception will be thrown.
 
   my $list = new Sigrok::SerialPort::List;
 
+What's the easiest way to get the first port?
+
+  my $port0;
+  eval { $port0 = Sigrok::SerialPort::List->new->ports->get(0) }
+    or die @_;
+  print 'First port: ', $port0->get_name();
+
 =item C<ports()>
 
 This method provides a get accessor for the array, based on an array reference
@@ -68,9 +74,9 @@ of type C<Sigrok::SerialPort::List::Ports>.
   foreach my $port ( $list->ports->elements ) {
     print 'Found port: ', $port->get_name(), "\n";
   }
+  die 'Error finding serial device' if $list->ports->is_empty;
   print 'First port: ', $list->ports->get(0)->get_name, "\n";
   print 'Number of ports: ', $list->ports->count, "\n";
-  die 'Error finding serial device' if $list->ports->is_empty;
 
 =back
 

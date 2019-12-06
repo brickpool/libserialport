@@ -13,8 +13,6 @@ use Sigrok::SerialPort qw(
   sp_add_port_events
   sp_wait
   sp_free_event_set
-
-  sp_last_error_message
 );
 use Sigrok::SerialPort::Error qw(
   SET_ERROR

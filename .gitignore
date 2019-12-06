@@ -56,3 +56,4 @@ dkms.conf
 examples/*.c
 libiio/*.zip
 xt/test*.pl
+test*.pl

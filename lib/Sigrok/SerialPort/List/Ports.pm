@@ -5,12 +5,9 @@ use Errno qw( :POSIX );
 
 use Sigrok::SerialPort qw(
   SP_OK
-  SP_ERR_FAIL
 
   sp_list_ports
   sp_free_port_list
-
-  sp_last_error_message
 );
 use Sigrok::SerialPort::Error qw(
   SET_ERROR
