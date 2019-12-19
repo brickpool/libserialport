@@ -1,5 +1,10 @@
 Revision history for Perl extension Sigrok::SerialPort.
 
+0.0205  2019-12-19
+	- fixing Makefile.PL and SerialPort.xs for the include file
+	- fixing README file for manuell installing
+	- fixing list_ports example
+
 0.0205  2019-12-06
 	- extending documentation
   - create additional getter methods for signaling

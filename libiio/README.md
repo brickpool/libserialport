@@ -61,7 +61,7 @@ dlltool --as-flags=--32 -m i386 -d libs\32\libserialport-0.def -l libs\32\libser
 ### (3) Get MinGW-W64 build Version
 
 ```
-if not exist "include" mkdir libs\64\
+if not exist "libs\64\" mkdir libs\64\
 powershell.exe -Command "Invoke-WebRequest https://github.com/scottmudge/libserialport-cmake/raw/master/build_x64/libserialport.dll -OutFile libs\64\libserialport-0.dll"
 powershell.exe -Command "Invoke-WebRequest https://github.com/scottmudge/libserialport-cmake/raw/master/build_x64/libserialport.dll.a -OutFile libs\64\libserialport.dll.a"
 ```

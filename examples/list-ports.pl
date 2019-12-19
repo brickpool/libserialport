@@ -13,7 +13,6 @@
 use strict;
 use warnings;
 use blib;
-use Time::HiRes qw(sleep);
 use Sigrok::SerialPort qw(:all);
 
 # Configuration
@@ -52,13 +51,13 @@ sub GetPort() {
          if ($nameMatch != -1) {
             sp_copy_port($portList[$i], \$port);
          } else {
-            print("Waiting for a serial port to appear.");
+            print("Waiting for a serial port to appear.\n");
             sleep(1);
          }
       }
 
-      sp_free_port_list(@portList);
-   } while ($port != 0);
+      sp_free_port_list(@portList) if @portList;
+   } while ($port == 0);
 
    return $port;
 }
@@ -72,19 +71,19 @@ sub ConfigureSerialPort($) {
 
    if (SP_OK != sp_set_baudrate($port, $baudRate))
    {
-      print("Unable to set port baudrate.");
+      print("Unable to set port baudrate.\n");
       $retval = -1;
    } elsif(SP_OK != sp_set_bits($port, $bits)) {
-      print("Unable to set port width.");
+      print("Unable to set port width.\n");
       $retval = -1;
    } elsif (SP_OK !=  sp_set_parity($port, $parity)) {
-      print("Unable to set port parity.");
+      print("Unable to set port parity.\n");
       $retval = -1;
    } elsif (SP_OK != sp_set_stopbits($port, $stopBits)) {
-      print("Unable to set port stop bits.");
+      print("Unable to set port stop bits.\n");
       $retval = -1;
    } else {
-      print("Port configured.");
+      print("Port configured.\n");
    }
 
    return $retval;
@@ -105,11 +104,11 @@ sub WaitForEventOnPort($) {
       if ($retval == SP_OK) {
          $retval = sp_wait($eventSet, 10000);
       } else {
-         print("Unable to add events to port.");
+         print("Unable to add events to port.\n");
          $retval = -1;
       }
    } else {
-      print("Unable to create new event set.");
+      print("Unable to create new event set.\n");
       $retval = -1;
    }
    sp_free_event_set($eventSet);
@@ -167,27 +166,27 @@ sub main() {
       $port = GetPort();
 
       if ($port == 0) {
-         print("Did not find a suitable port.");
+         print("Did not find a suitable port.\n");
       } else {
          printf("Using %s\n", sp_get_port_name($port));
          $retval = sp_open($port, SP_MODE_READ | SP_MODE_WRITE);
          if ($retval == SP_OK) {
-            print("Serial port successfully opened.");
+            print("Serial port successfully opened.\n");
 
             if (ConfigureSerialPort($port) == 0) {
                $error = ReadFromPort($port);
             }
 
-            print("Closing serial port.");
+            print("Closing serial port.\n");
             $retval = sp_close($port);
             if($retval == SP_OK) {
-               print("Serial port closed.");
+               print("Serial port closed.\n");
             } else {
-               print("Unable to close serial port.");
+               print("Unable to close serial port.\n");
             }
 
          } else {
-            print("Error opening serial port.");
+            print("Error opening serial port.\n");
          }
       }
 

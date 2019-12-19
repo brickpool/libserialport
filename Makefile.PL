@@ -42,7 +42,7 @@ WriteMakefile(
   },
   LICENSE           => 'lgpl_3_0',
   LIBS              => ["-l$sp_lib_dir/$sp_lib_file"],
-  INC               => '-I. -I./libbio/include',
+  INC               => "-I./$sp_root_dir/include",
   MYEXTLIB          => "$sp_lib_dir/$sp_lib_file",
   test              => {TESTS => 't/*.t t/*/*.t'}
 );

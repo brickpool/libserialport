@@ -2,7 +2,7 @@
 #include <perl.h>
 #include <XSUB.h>
 
-#include "libiio/include/libserialport.h"
+#include <libserialport.h>
 
 #ifndef SP_ADDRLEN 
 #  define SP_ADDRLEN 2*sizeof(IV)
