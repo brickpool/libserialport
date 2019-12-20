@@ -2,7 +2,7 @@
 
 use ExtUtils::MakeMaker;
 
-$Verbose = 1;
+$Verbose = 0;
 
 use Config qw(%Config);
 my $bitint            = $Config{use64bitint} ? 64 : 32;

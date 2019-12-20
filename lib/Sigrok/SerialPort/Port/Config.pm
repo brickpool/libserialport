@@ -220,22 +220,22 @@ sub cget {
   $option =~ s/^\b/\-/;  # option => -option
   my $ret_val;
   SWITCH: for ($option) {
-    /^-baudrate$/ && do { $ret_val = $self->get_baudrate; last SWITCH };
-    /^-bits$/     && do { $ret_val = $self->get_bits;     last SWITCH };
-    /^-parity$/   && do { $ret_val = $self->get_parity;   last SWITCH };
-    /^-stopbits$/ && do { $ret_val = $self->get_stopbits; last SWITCH };
-    /^-rts$/      && do { $ret_val = $self->get_rts;      last SWITCH };
-    /^-cts$/      && do { $ret_val = $self->get_cts;      last SWITCH };
-    /^-dtr$/      && do { $ret_val = $self->get_dtr;      last SWITCH };
-    /^-dsr$/      && do { $ret_val = $self->get_dsr;      last SWITCH };
-    /^-xon_xoff$/ && do { $ret_val = $self->get_xon_xoff; last SWITCH };
-    {
+    /^-baudrate$/ && do { $ret_val = $self->get_baudrate; last };
+    /^-bits$/     && do { $ret_val = $self->get_bits;     last };
+    /^-parity$/   && do { $ret_val = $self->get_parity;   last };
+    /^-stopbits$/ && do { $ret_val = $self->get_stopbits; last };
+    /^-rts$/      && do { $ret_val = $self->get_rts;      last };
+    /^-cts$/      && do { $ret_val = $self->get_cts;      last };
+    /^-dtr$/      && do { $ret_val = $self->get_dtr;      last };
+    /^-dsr$/      && do { $ret_val = $self->get_dsr;      last };
+    /^-xon_xoff$/ && do { $ret_val = $self->get_xon_xoff; last };
+    DEFAULT: {
       croak "Validation failed for 'option' with value $_ " .
             "(-baudrate|-bits|-parity|-stopbits|-rts|-cts|-dtr|-dsr|-xon_xoff) is required";
     }
   }
   defined ($ret_val)
-    or return undef;
+    or return wantarray ? () : undef;
   return $ret_val;
 }
 
@@ -245,7 +245,7 @@ sub configure {
     unless ($self->get_handle) {
       # The value of the config argument is invalid.
       SET_ERROR(ENXIO); # No such device or address
-      return undef;
+      return wantarray ? () : undef;
     }
     my @ret_val = qw(-baudrate -bits -parity -stopbits -rts -cts -dtr -dsr -xon_xoff -flowcontrol);
     return wantarray ? @ret_val : scalar @ret_val;
@@ -265,16 +265,16 @@ sub configure {
   my $cnt = 0;
   while ( my ($key, $value) = each %options ) {
     SWITCH: for ($key) {
-      /^-baudrate$/     && do { defined $self->set_baudrate($value)     or return undef; last SWITCH };
-      /^-bits$/         && do { defined $self->set_bits($value)         or return undef; last SWITCH };
-      /^-parity$/       && do { defined $self->set_parity($value)       or return undef; last SWITCH };
-      /^-stopbits$/     && do { defined $self->set_stopbits($value)     or return undef; last SWITCH };
-      /^-rts$/          && do { defined $self->set_rts($value)          or return undef; last SWITCH };
-      /^-cts$/          && do { defined $self->set_cts($value)          or return undef; last SWITCH };
-      /^-dtr$/          && do { defined $self->set_dtr($value)          or return undef; last SWITCH };
-      /^-dsr$/          && do { defined $self->set_dsr($value)          or return undef; last SWITCH };
-      /^-xon_xoff$/     && do { defined $self->set_xon_xoff($value)     or return undef; last SWITCH };
-      /^-flowcontrol$/  && do { defined $self->set_flowcontrol($value)  or return undef; last SWITCH };
+      /^-baudrate$/     && do { defined $self->set_baudrate($value)     or return wantarray ? () : undef; last };
+      /^-bits$/         && do { defined $self->set_bits($value)         or return wantarray ? () : undef; last };
+      /^-parity$/       && do { defined $self->set_parity($value)       or return wantarray ? () : undef; last };
+      /^-stopbits$/     && do { defined $self->set_stopbits($value)     or return wantarray ? () : undef; last };
+      /^-rts$/          && do { defined $self->set_rts($value)          or return wantarray ? () : undef; last };
+      /^-cts$/          && do { defined $self->set_cts($value)          or return wantarray ? () : undef; last };
+      /^-dtr$/          && do { defined $self->set_dtr($value)          or return wantarray ? () : undef; last };
+      /^-dsr$/          && do { defined $self->set_dsr($value)          or return wantarray ? () : undef; last };
+      /^-xon_xoff$/     && do { defined $self->set_xon_xoff($value)     or return wantarray ? () : undef; last };
+      /^-flowcontrol$/  && do { defined $self->set_flowcontrol($value)  or return wantarray ? () : undef; last };
     }
     $cnt++
   }

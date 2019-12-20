@@ -462,8 +462,8 @@ sp_get_config(port, config);
 
 enum sp_return
 sp_set_config(port, config);
-    const struct sp_port* port;
-    struct sp_port_config* config;
+    struct sp_port* port;
+    const struct sp_port_config* config;
 
 enum sp_return
 sp_set_baudrate(port, baudrate);
@@ -517,7 +517,7 @@ sp_set_config_bits(config, bits);
 
 enum sp_return
 sp_set_parity(port, parity);
-    const struct sp_port* port;
+    struct sp_port* port;
     enum sp_parity parity;
 
 enum sp_return
@@ -537,7 +537,7 @@ sp_get_config_parity(config, parity_ptr);
 
 enum sp_return
 sp_set_config_parity(config, parity);
-    const struct sp_port_config* config;
+    struct sp_port_config* config;
     enum sp_parity parity;
 
 enum sp_return
@@ -567,7 +567,7 @@ sp_set_config_stopbits(config, stopbits);
 
 enum sp_return
 sp_set_rts(port, rts);
-    const struct sp_port* port;
+    struct sp_port* port;
     enum sp_rts rts;
 
 enum sp_return
@@ -592,7 +592,7 @@ sp_set_config_rts(config, rts);
 
 enum sp_return
 sp_set_cts(port, cts);
-    const struct sp_port* port;
+    struct sp_port* port;
     enum sp_cts cts;
 
 enum sp_return
@@ -617,7 +617,7 @@ sp_set_config_cts(config, cts);
 
 enum sp_return
 sp_set_dtr(port, dtr);
-    const struct sp_port* port;
+    struct sp_port* port;
     enum sp_dtr dtr;
 
 enum sp_return
@@ -642,7 +642,7 @@ sp_set_config_dtr(config, dtr);
 
 enum sp_return
 sp_set_dsr(port, dsr);
-    const struct sp_port* port;
+    struct sp_port* port;
     enum sp_dsr dsr;
 
 enum sp_return
@@ -667,7 +667,7 @@ sp_set_config_dsr(config, dsr);
 
 enum sp_return
 sp_set_xon_xoff(port, xon_xoff);
-    const struct sp_port* port;
+    struct sp_port* port;
     enum sp_xonxoff xon_xoff;
 
 enum sp_return
@@ -713,7 +713,7 @@ sp_blocking_read(port, buf, count, timeout_ms);
     size_t count;
     unsigned int timeout_ms;
   PREINIT:
-    STRLEN xpv_len;
+    STRLEN xpv_length;
     char* xpv_pv;
   INIT:
     SvGETMAGIC(buf);
@@ -726,9 +726,9 @@ sp_blocking_read(port, buf, count, timeout_ms);
   {
     /* We don't need the existing content of the buffer string */
     SvPVCLEAR(buf);
-    /* Generate a warning if the memory size (xpv_len) of the buffer is smaller than needed */
-    xpv_len = SvLEN(buf);
-    if (count >= xpv_len)
+    /* Generate a warning if the memory size (xpv_length) of the buffer is smaller than needed */
+    xpv_length = SvLEN(buf);
+    if (count >= xpv_length)
       warn("Sigrok::SerialPort::sp_blocking_read: the size of buf is smaller than count.");
     /* SvGROW will automatically grow the buffer string for us */
     /* we add space for a trailing NUL like perl's own string functions */
@@ -757,7 +757,7 @@ sp_blocking_read_next(port, buf, count, timeout_ms);
     size_t count;
     unsigned int timeout_ms;
   PREINIT:
-    STRLEN xpv_len;
+    STRLEN xpv_length;
     char* xpv_pv;
   INIT:
     SvGETMAGIC(buf);
@@ -769,8 +769,8 @@ sp_blocking_read_next(port, buf, count, timeout_ms);
   CODE:
   {
     SvPVCLEAR(buf);
-    xpv_len = SvLEN(buf);
-    if (count >= xpv_len)
+    xpv_length = SvLEN(buf);
+    if (count >= xpv_length)
       warn("Sigrok::SerialPort::sp_blocking_read_next: the size of buf is smaller than count.");
     xpv_pv = SvGROW(buf, count + 1);
     xpv_pv[count] = '\0';
@@ -792,7 +792,7 @@ sp_nonblocking_read(port, buf, count);
     SV* buf;
     size_t count;
   PREINIT:
-    STRLEN xpv_len;
+    STRLEN xpv_length;
     char* xpv_pv;
   INIT:
     SvGETMAGIC(buf);
@@ -804,8 +804,8 @@ sp_nonblocking_read(port, buf, count);
   CODE:
   {
     SvPVCLEAR(buf);
-    xpv_len = SvLEN(buf);
-    if (count >= xpv_len)
+    xpv_length = SvLEN(buf);
+    if (count >= xpv_length)
       warn("Sigrok::SerialPort::sp_nonblocking_read: the size of buf is smaller than count.");
     xpv_pv = SvGROW(buf, count + 1);
     xpv_pv[count] = '\0';

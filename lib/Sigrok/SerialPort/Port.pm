@@ -443,16 +443,16 @@ sub BUILD {
     $self->is_open or croak "Attribute (mode) is required if using ($key)";
     my $value = $self->{$key};
     SWITCH: for ($key) {
-      /^baudrate$/    && do { defined $self->_set_baudrate($value)    or croak $ERRNO; last SWITCH };
-      /^bits$/        && do { defined $self->_set_bits($value)        or croak $ERRNO; last SWITCH };
-      /^parity$/      && do { defined $self->_set_parity($value)      or croak $ERRNO; last SWITCH };
-      /^stopbits$/    && do { defined $self->_set_stopbits($value)    or croak $ERRNO; last SWITCH };
-      /^rts$/         && do { defined $self->_set_rts($value)         or croak $ERRNO; last SWITCH };
-      /^cts$/         && do { defined $self->_set_cts($value)         or croak $ERRNO; last SWITCH };
-      /^dtr$/         && do { defined $self->_set_dtr($value)         or croak $ERRNO; last SWITCH };
-      /^dsr$/         && do { defined $self->_set_dsr($value)         or croak $ERRNO; last SWITCH };
-      /^xon_xoff$/    && do { defined $self->_set_xon_xoff($value)    or croak $ERRNO; last SWITCH };
-      /^flowcontrol$/ && do { defined $self->_set_flowcontrol($value) or croak $ERRNO; last SWITCH };
+      /^baudrate$/    && do { defined $self->_set_baudrate($value)    or croak $ERRNO; last };
+      /^bits$/        && do { defined $self->_set_bits($value)        or croak $ERRNO; last };
+      /^parity$/      && do { defined $self->_set_parity($value)      or croak $ERRNO; last };
+      /^stopbits$/    && do { defined $self->_set_stopbits($value)    or croak $ERRNO; last };
+      /^rts$/         && do { defined $self->_set_rts($value)         or croak $ERRNO; last };
+      /^cts$/         && do { defined $self->_set_cts($value)         or croak $ERRNO; last };
+      /^dtr$/         && do { defined $self->_set_dtr($value)         or croak $ERRNO; last };
+      /^dsr$/         && do { defined $self->_set_dsr($value)         or croak $ERRNO; last };
+      /^xon_xoff$/    && do { defined $self->_set_xon_xoff($value)    or croak $ERRNO; last };
+      /^flowcontrol$/ && do { defined $self->_set_flowcontrol($value) or croak $ERRNO; last };
     }
   }
 }
@@ -523,20 +523,20 @@ sub get_usb {
   foreach (@options) {
     my $ret_val;
     SWITCH: {
-      /^-bus$/          && do { $ret_val = $self->get_usb_bus;          last SWITCH };
-      /^-address$/      && do { $ret_val = $self->get_usb_address;      last SWITCH };
-      /^-vid$/          && do { $ret_val = $self->get_usb_vid;          last SWITCH };
-      /^-pid$/          && do { $ret_val = $self->get_usb_pid;          last SWITCH };
-      /^-manufacturer$/ && do { $ret_val = $self->get_usb_manufacturer; last SWITCH };
-      /^-product$/      && do { $ret_val = $self->get_usb_product;      last SWITCH };
-      /^-serial$/       && do { $ret_val = $self->get_usb_serial;       last SWITCH };
-      {
+      /^-bus$/          && do { $ret_val = $self->get_usb_bus;          last };
+      /^-address$/      && do { $ret_val = $self->get_usb_address;      last };
+      /^-vid$/          && do { $ret_val = $self->get_usb_vid;          last };
+      /^-pid$/          && do { $ret_val = $self->get_usb_pid;          last };
+      /^-manufacturer$/ && do { $ret_val = $self->get_usb_manufacturer; last };
+      /^-product$/      && do { $ret_val = $self->get_usb_product;      last };
+      /^-serial$/       && do { $ret_val = $self->get_usb_serial;       last };
+      DEFAULT: {
         croak "Validation failed for 'option' with value $_ " .
               "(-bus|-address|-vid|-pid|-manufacturer|-product|-serial) is required";
       }
     }
     defined ($ret_val)
-      or return undef;
+      or return wantarray ? () : undef;
     push @ret_list, $ret_val;
     $cnt++
   }
@@ -547,7 +547,7 @@ sub cget {
   # we use the getter method here to read the config.
   my $config = shift->config;
   defined $config
-    or return undef;
+    or return wantarray ? () : undef;
   return $config->cget(@_);
 }
 
@@ -555,7 +555,7 @@ sub configure {
   # we use the getter method here to read the config.
   my $config = shift->config;
   defined $config
-    or return undef;
+    or return wantarray ? () : undef;
   return $config->configure(@_);
 }
 

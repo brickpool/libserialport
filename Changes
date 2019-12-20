@@ -1,16 +1,24 @@
 Revision history for Perl extension Sigrok::SerialPort.
 
-0.0205  2019-12-19
-	- fixing Makefile.PL and SerialPort.xs for the include file
-	- fixing README file for manuell installing
-	- fixing list_ports example
+0.0207  2019-12-20
+  - rename 'xpv_len' to 'xpv_length' in XS for Perl64 5.22 (and other versions)
+  - fixing 'const' qualifier for: sp_set_config, sp_set_parity,
+    sp_set_config_parity, sp_set_rts, sp_set_cts, sp_set_dtr, sp_set_dsr,
+    sp_set_xon_xoff
+  - fixing explicit 'return undef' in array context to '()' for: cget,
+    configure, get_usb
+
+0.0206  2019-12-19
+  - fixing Makefile.PL and SerialPort.xs for the include file
+  - fixing README file for manuell installing
+  - fixing list_ports example
 
 0.0205  2019-12-06
-	- extending documentation
+  - extending documentation
   - create additional getter methods for signaling
 
 0.0204  2019-12-03
-	- extending documentation
+  - extending documentation
   - adding POD tests
   - cleanup new/configure/cget/get_usb
 
@@ -19,17 +27,16 @@ Revision history for Perl extension Sigrok::SerialPort.
   - bug fixing
 
 0.0202  2019-11-30
-	- use of $ERRNO/$! instead of croak/is_ok/return_code
-	- adding package Sigrok::SerialPort::Error
-	- move Sigrok::SerialPort::Backend to Sigrok::SerialPort
+  - use of $ERRNO/$! instead of croak/is_ok/return_code
+  - adding package Sigrok::SerialPort::Error
+  - move Sigrok::SerialPort::Backend to Sigrok::SerialPort
 
 0.0201  2019-11-22
-	- extending documentation
-	- adding examples
+  - extending documentation
+  - adding examples
 
 0.0200  2019-10-30
-	- SerialPort OOP Class, created with Moose
+  - SerialPort OOP Class, created with Moose
 
 0.0100  2019-10-10
-	- original version; created by h2xs 1.23 with options
-		-A SerialPort
+  - original version; created by h2xs 1.23 with options -A SerialPort

@@ -34,18 +34,17 @@ sub SET_ERROR {
   );
   $err = SP_ERR_FAIL unless defined $err;
   SWITCH: {
-    ($err == SP_OK)       && do { $ERRNO = 0;       last SWITCH };
-    ($err == SP_ERR_ARG)  && do { $ERRNO = EINVAL;  last SWITCH };
-    ($err == SP_ERR_FAIL) && do { $ERRNO = EFAULT;  last SWITCH };
-    ($err == SP_ERR_MEM)  && do { $ERRNO = ENOMEM;  last SWITCH };
-    ($err == SP_ERR_SUPP) && do { $ERRNO = ENOSYS;  last SWITCH };
-    {
-      $ERRNO = $err;
-    }
+    $err == SP_OK       && do { $ERRNO = 0;       last };
+    $err == SP_ERR_ARG  && do { $ERRNO = EINVAL;  last };
+    $err == SP_ERR_FAIL && do { $ERRNO = EFAULT;  last };
+    $err == SP_ERR_MEM  && do { $ERRNO = ENOMEM;  last };
+    $err == SP_ERR_SUPP && do { $ERRNO = ENOSYS;  last };
+    DEFAULT:                  { $ERRNO = $err;         };
   }
   if ($extended) {
     $EXTENDED_OS_ERROR = $extended;
-  } elsif ($err != SP_ERR_FAIL) {
+  }
+  elsif ($err != SP_ERR_FAIL) {
     $EXTENDED_OS_ERROR = sp_last_error_code();
   }
   return 1;
