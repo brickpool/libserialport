@@ -3,6 +3,7 @@ examples/example.pl
 examples/easy.pl
 examples/list-ports.pl
 examples/README.md
+examples/serial/serial.ino
 lib/Sigrok/SerialPort.pm
 lib/Sigrok/SerialPort/Base.pm
 lib/Sigrok/SerialPort/Error.pm
@@ -17,7 +18,7 @@ libiio/README.md
 LICENSE
 Makefile.PL
 MANIFEST
-README.md
+README.pod
 SerialPort.xs
 t/backend/01_const.t
 t/backend/02_versions.t
@@ -37,4 +38,5 @@ t/objects/05_obj_config.t
 t/objects/07_obj_waiting.t
 t/objects/08_obj_signals.t
 t/objects/09_obj_errors.t
+typemap
 xt/pod.t

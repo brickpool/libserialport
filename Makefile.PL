@@ -1,44 +1,43 @@
-#!/bin/env perl
+#! perl
 
-use ExtUtils::MakeMaker;
+use ExtUtils::MakeMaker 6.64;
 
 $Verbose = 0;
 
 use Config qw(%Config);
-my $bitint            = $Config{use64bitint} ? 64 : 32;
+my $bitint            = $Config{ptrsize} == 4 ? 32 : 64;
 my $lib_archive_file  = 'libiio-win-deps.zip';
 my $sp_root_dir       = 'libiio';
 my $sp_lib_dir        = "$sp_root_dir/libs/$bitint";
 my $sp_lib_file       = 'libserialport.dll.a';
 
 WriteMakefile(
-  MIN_PERL_VERSION    => 5.016003,
+  MIN_PERL_VERSION    => 5.012004,
   NAME                => 'Sigrok::SerialPort',
   AUTHOR              => 'J. Schneider',
   VERSION_FROM        => 'lib/Sigrok/SerialPort.pm',
   ABSTRACT_FROM       => 'lib/Sigrok/SerialPort.pm',
   CONFIGURE_REQUIRES  => {
-    'ExtUtils::MakeMaker' => 6.84,
+    'ExtUtils::MakeMaker' => 6.64,
   },
   BUILD_REQUIRES      => {
     'ExtUtils::Install'   => 1.54,
-    'ExtUtils::Command'   => 1.18,
-    'ExtUtils::Manifest'  => 1.63,
-    'LWP::Simple'         => 0,
+    'ExtUtils::Command'   => 1.17,
+    'ExtUtils::Manifest'  => 1.58,
   },
   PREREQ_PM           => {
-    'strict'                    => 0,
-    'warnings'                  => 0,
-    'Carp'                      => 1.32,
-    'English'                   => 0,
-    'Errno'                     => 0,
-    'Exporter'                  => 5.68,
-    'Moose'                     => 2.1005,
-    'MooseX::Params::Validate'  => 0.21,
-    'XSLoader'                  => 0.15,
+    'strict'                    => 1.04,
+    'warnings'                  => 1.09,
+    'Carp'                      => 1.17,
+    'English'                   => 1.04,
+    'Errno'                     => 1.11,
+    'Exporter'                  => 5.6401,
+    'Moose'                     => 2.0007,
+    'MooseX::Params::Validate'  => 0.18,
+    'XSLoader'                  => 0.10,
   },
   TEST_REQUIRES       => {
-    'Test::More'      => 0,
+    'Test::More'      => 0.95,
   },
   LICENSE           => 'lgpl_3_0',
   LIBS              => ["-l$sp_lib_dir/$sp_lib_file"],

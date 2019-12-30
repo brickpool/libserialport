@@ -25,7 +25,7 @@ if (defined $port)
   # basic tests
   ok length sp_get_port_name($port)        > 0, 'sp_get_port_name';
   ok length sp_get_port_description($port) > 0, 'sp_get_port_description';
-  ok        sp_get_port_transport($port)   > 0, 'sp_get_port_transport';
+  ok        sp_get_port_transport($port)  >= 0, 'sp_get_port_transport';
 
   if (sp_get_port_transport($port) == SP_TRANSPORT_USB)
   {

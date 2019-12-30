@@ -1,0 +1,39 @@
+TYPEMAP
+enum sp_return      T_ENUM
+enum sp_mode        T_ENUM
+enum sp_event       T_ENUM
+enum sp_buffer      T_ENUM
+enum sp_parity      T_ENUM
+enum sp_rts         T_ENUM
+enum sp_cts         T_ENUM
+enum sp_dtr         T_ENUM
+enum sp_dsr         T_ENUM
+enum sp_xonxoff     T_ENUM
+enum sp_flowcontrol T_ENUM
+enum sp_signal      T_ENUM
+enum sp_transport   T_ENUM
+
+struct        sp_port*    T_PTR
+const struct  sp_port*    T_PTR
+struct        sp_port**   T_SVREF
+struct        sp_port***  T_AVREF
+
+struct        sp_port_config*   T_PTR
+const struct  sp_port_config*   T_PTR
+struct        sp_port_config**  T_SVREF
+
+struct        sp_event_set*   T_PTR
+struct        sp_event_set**  T_SVREF
+
+long long         T_IV
+
+int*              T_SVREF
+SP_PORT_HANDLE*   T_SVREF
+enum sp_parity*   T_SVREF
+enum sp_rts*      T_SVREF
+enum sp_cts*      T_SVREF
+enum sp_dtr*      T_SVREF
+enum sp_dsr*      T_SVREF
+enum sp_xonxoff*  T_SVREF
+enum sp_signal*   T_SVREF
+const void*       T_OPAQUEPTR

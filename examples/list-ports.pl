@@ -16,11 +16,11 @@ use blib;
 use Sigrok::SerialPort qw(:all);
 
 # Configuration
-my $portNameBase = "COM3";
+my $portNameBase = "COM1";
 my $baudRate = 9600;
 my $bits = 8;
 my $stopBits = 1;
-my $parity = SP_PARITY_NONE;
+my $parity = SP_PARITY_EVEN;
 
 ##
 # Wait for a port to appear.  Return a pointer to the port.
@@ -69,23 +69,54 @@ sub ConfigureSerialPort($) {
    my ($port) = @_;
    my $retval = 0;
 
-   if (SP_OK != sp_set_baudrate($port, $baudRate))
-   {
-      print("Unable to set port baudrate.\n");
-      $retval = -1;
-   } elsif(SP_OK != sp_set_bits($port, $bits)) {
-      print("Unable to set port width.\n");
-      $retval = -1;
-   } elsif (SP_OK !=  sp_set_parity($port, $parity)) {
-      print("Unable to set port parity.\n");
-      $retval = -1;
-   } elsif (SP_OK != sp_set_stopbits($port, $stopBits)) {
-      print("Unable to set port stop bits.\n");
-      $retval = -1;
-   } else {
-      print("Port configured.\n");
+   if ($^O ne 'MSWin32') {
+      if (SP_OK != sp_set_baudrate($port, $baudRate))
+      {
+         print("Unable to set port baudrate.\n");
+         $retval = -1;
+      } elsif(SP_OK != sp_set_bits($port, $bits)) {
+         print("Unable to set port width.\n");
+         $retval = -1;
+      } elsif (SP_OK !=  sp_set_parity($port, $parity)) {
+         print("Unable to set port parity.\n");
+         $retval = -1;
+      } elsif (SP_OK != sp_set_stopbits($port, $stopBits)) {
+         print("Unable to set port stop bits.\n");
+         $retval = -1;
+      } else {
+         print("Port configured.\n");
+      }
    }
-
+   else {
+      # workaround for windows bug 'DCB.fParity always FALSE after a GetCommState'
+      my $config;
+      if (sp_new_config(\$config) != SP_OK) {
+         print("Unable to create new config.\n");
+         $retval = -1;
+      } elsif (sp_get_config($port, $config) != SP_OK) {
+         print("Unable to get config.\n");
+         $retval = -1;
+      } elsif (sp_set_config_baudrate($config, $baudRate) != SP_OK) {
+         print("Unable to set config baudrate.\n");
+         $retval = -1;
+      } elsif (sp_set_config_bits($config, $bits) != SP_OK) {
+         print("Unable to set config width.\n");
+         $retval = -1;
+      } elsif (sp_set_config_parity($config, $parity) != SP_OK) {
+         print("Unable to set port parity.\n");
+         $retval = -1;
+      } elsif (sp_set_config_stopbits($config, $stopBits) != SP_OK) {
+         print("Unable to set port stop bits.\n");
+         $retval = -1;
+      } elsif (sp_set_config($port, $config) != SP_OK) {
+         print("Unable to set config.\n");
+         $retval = -1;
+      } else {
+         sp_free_config($config);
+         print("Port configured.\n");
+      }
+   }
+   
    return $retval;
 }
 
@@ -141,8 +172,8 @@ sub ReadFromPort($) {
             last;
          } else {
             for($i=0; $i<$retval; $i++) {
-               printf("%c", substr($buf,$i,1));
-               if (ord(substr($buf,$i,1)) == 13) {
+               printf("%c", unpack('x'.$i.'c1', $buf));
+               if (unpack('x'.$i.'c1', $buf) == 13) {
                   $count++;
                }
             }

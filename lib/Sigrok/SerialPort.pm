@@ -5,7 +5,7 @@ use warnings;
 
 use Exporter;
 
-our $VERSION = 0.0207;
+our $VERSION = 0.0208;
 
 our @ISA = qw(Exporter);
 
@@ -590,7 +590,7 @@ Get the baud rate from a port configuration.
 
   $ret = sp_get_config_baudrate($config, \$baudrate);
 
-=item C<sp_get_config_baudrate>
+=item C<sp_set_config_baudrate>
 
 Set the baud rate in a port configuration.
 
@@ -879,11 +879,11 @@ Wait for any of a set of events to occur.
 
   $ret = sp_wait($event_set, $timeout_ms);
 
-=item C<sp_wait>
+=item C<sp_free_event_set>
 
 Free a structure allocated by L</sp_new_event_set>.
 
-  $ret = sp_free_event_set($event_set, $timeout_ms);
+  sp_free_event_set($event_set);
 
 =back
 
@@ -981,7 +981,7 @@ Get the error message for a failed operation.
 
   $ret = sp_last_error_message();
 
-=item C<sp_last_error_message>
+=item C<sp_free_error_message>
 
 Free an error message returned by L</sp_last_error_message>.
 

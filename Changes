@@ -1,5 +1,15 @@
 Revision history for Perl extension Sigrok::SerialPort.
 
+0.0208  2019-12-26
+  - adding Arduino Sketch 'serial.ino' in example folder
+  - change README.md to README.pod in the main directory (and update MANIFEST)
+  - change Makefile.pl for compatibility, now compatible with Perl 5.12.4 32bit
+  - reduce some warnings when executing make
+  - fixing test case 4 for 'sp_get_port_transport' for native serial port's
+  - fixing return undef value for config setter
+  - fixing test 'is_open' in data handling
+  - fixing output for example 'list-ports.pl'
+
 0.0207  2019-12-20
   - rename 'xpv_len' to 'xpv_length' in XS for Perl64 5.22 (and other versions)
   - fixing 'const' qualifier for: sp_set_config, sp_set_parity,

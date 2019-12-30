@@ -24,7 +24,7 @@ SKIP: {
   # basic tests
   ok length $port->get_name         > 0, 'get_name';
   ok length $port->get_description  > 0, 'get_description';
-  ok        $port->get_transport    > 0, 'get_transport';
+  ok        $port->get_transport   >= 0, 'get_transport';
 }
 
 SKIP: {

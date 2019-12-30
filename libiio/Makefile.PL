@@ -1,11 +1,11 @@
-#!/bin/env perl
+#! perl
 
-use ExtUtils::MakeMaker;
+use ExtUtils::MakeMaker 6.64;
 
 $Verbose = 0;
 
 use Config qw(%Config);
-my $bitint            = $Config{use64bitint} ? 64 : 32;
+my $bitint            = $Config{ptrsize} == 4 ? 32 : 64;
 my $lib_download_url  = 'http://swdownloads.analog.com/cse/build/libiio-win-deps.zip';
 my $lib_archive_file  = 'libiio-win-deps.zip';
 my $sp_include_dir    = 'include';
@@ -17,6 +17,10 @@ my $sp_file_so        = 'libserialport-0.dll';
 WriteMakefile (
   NAME    => 'Sigrok::SerialPort',
   VERSION => '0.1.1',
+  BUILD_REQUIRES      => {
+    'LWP::Simple'         => 6.00,
+    'Archive::Zip'        => 1.30,
+  },
   LICENSE => 'lgpl_3_0',
   SKIP    => [ qw(all static dynamic) ],
   clean   => { FILES => '*/ *.zip' },
@@ -25,7 +29,7 @@ WriteMakefile (
 
 sub MY::top_targets {
 "
-UNCOMPRESS = tar -xmzvf
+UNCOMPRESS = \$(ABSPERLRUN) -MArchive::Zip -E\"my \$\$z = Archive::Zip->new; \$\$z->read(shift \@ARGV); \$\$z->extractMember(\$\$_) foreach \@ARGV;\"
 DOWNLOAD = \$(INSTALLSCRIPT)/lwp-download
 LIB_DOWNLOAD_URL = $lib_download_url
 LIB_ARCHIVE_FILE = $lib_archive_file
@@ -46,13 +50,15 @@ static :: \$(LIB_ARCHIVE_FILE) \$(SP_FILES)
 \t\$(DOWNLOAD) \$(LIB_DOWNLOAD_URL)
 
 \$(SP_FILE_H): \$(LIB_ARCHIVE_FILE)
-\t\$(UNCOMPRESS) \$(LIB_ARCHIVE_FILE) \$(SP_FILE_H)
+\t\$(NOECHO) \$(UNCOMPRESS) \$(LIB_ARCHIVE_FILE) \$(SP_FILE_H)
+\t\$(NOECHO) \$(TOUCH) \$(SP_FILE_H)
 
 \$(SP_FILE_A): \$(LIB_ARCHIVE_FILE)
-\t\$(UNCOMPRESS) \$(LIB_ARCHIVE_FILE) \$(SP_FILE_A)
+\t\$(NOECHO) \$(UNCOMPRESS) \$(LIB_ARCHIVE_FILE) \$(SP_FILE_A)
 \t\$(NOECHO) \$(TOUCH) \$(SP_FILE_A)
 
 \$(SP_FILE_SO): \$(LIB_ARCHIVE_FILE)
-\t\$(UNCOMPRESS) \$(LIB_ARCHIVE_FILE) \$(SP_FILE_SO)
+\t\$(NOECHO) \$(UNCOMPRESS) \$(LIB_ARCHIVE_FILE) \$(SP_FILE_SO)
+\t\$(NOECHO) \$(TOUCH) \$(SP_FILE_SO)
 ";
 }

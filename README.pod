@@ -1,0 +1,98 @@
+=head1 NAME
+
+SerialPort version 0.02
+
+=head1 DESCRIPTION
+
+Perl wrapper for the C<libserialport> C library.
+
+All essential functions of the entire library API are wrapped by using C<XS>.
+In addition, a higher-level OOP interface is also provided by using C<Moose>.
+
+The library could build only on Windows and should work on Windows and
+Unix-based systems. If it does not, please submit a Issue.
+
+=head1 ALPHA WARNING
+
+This stuff is all still pretty new and I may break it while working on it,
+I may break compatibility with any given commit.
+
+=head1 INSTALLATION
+
+To install this module type the following:
+
+  perl Makefile.PL
+  make
+  make test
+  make install
+
+=head1 DEPENDENCIES
+
+This module requires these modules or libraries and some other modules:
+
+=over
+
+=item *
+
+Moose
+
+=item *
+
+MooseX::Params::Validate
+
+=item *
+
+libserialport
+
+=back
+
+The C<examples/> directory contains simple serial programs by using the
+C<Sigrok::SerialPort> I<backend> module.
+
+=head1 SEE ALSO
+
+=over
+
+=item *
+
+L<https://sigrok.org/wiki/Libserialport>
+
+=back
+
+=head1 AUTHOR
+
+=over
+
+=item *
+
+J. Schneider E<lt>L<http://github.com/brickpool>E<gt>
+
+=back
+
+=head1 COPYRIGHT AND LICENCE
+
+libserialport is an open source project released under the LGPL3+ license.
+
+=over
+
+=item *
+
+Copyright (C) 2013, 2015 Martin Ling E<lt>martin-libserialport@earth.liE<gt>
+
+=item *
+
+Copyright (C) 2014 Uwe Hermann E<lt>uwe@hermann-uwe.deE<gt>
+
+=item *
+
+Copyright (C) 2014 Aurelien Jacobs E<lt>aurel@gnuage.orgE<gt>
+
+=back
+
+This Module is free software: you can redistribute it and/or modify it under
+the same terms of the GNU Lesser General Public License as published by
+libserialport.
+
+Please refer to the Sigrok homepage for a lot more information.
+
+=cut

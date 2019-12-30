@@ -26,7 +26,7 @@ sub main
 # We need a serial port name
   if ($argc<2)
     {
-    printf(STDERR "Usage la port\n");
+    print(STDERR "Usage la port\n");
     exit(1);
     }
 # Open serial port
@@ -59,7 +59,7 @@ sub main
 # sort of inefficient -- could read a bunch of bytes at once
 # could even block for all of them at once
     sp_nonblocking_read($port,\$c,1);
-    if ($i%16==0) { print("\n"); }
+    if ($i%16==0) { printf("\n"); }
     printf("%02X ",ord($c));
     }
   print("\n");

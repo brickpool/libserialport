@@ -352,56 +352,56 @@ after 'config' => sub {
 };
 
 # The order of processing the parameters by "trigger" can not be guaranteed.
-# "after 'set_ ..." and "BUILD" are used to process the arguments in the correct order.
+# "around 'set_ ..." and "BUILD" are used to process the arguments in the correct order.
 
-before 'set_baudrate' => sub {
-  my ($self, $arg) = @_;
-  $self->{baudrate} = $self->_trigger_baudrate($arg);
+around 'set_baudrate' => sub {
+  my ($code, $self, $arg) = @_;
+  return $self->$code($self->_trigger_baudrate($arg));
 };
 
-before 'set_bits' => sub {
-  my ($self, $arg) = @_;
-  $self->{bits} = $self->_trigger_bits($arg);
+around 'set_bits' => sub {
+  my ($code, $self, $arg) = @_;
+  return $self->$code($self->_trigger_bits($arg));
 };
 
-before 'set_parity' => sub {
-  my ($self, $arg) = @_;
-  $self->{parity} = $self->_trigger_parity($arg);
+around 'set_parity' => sub {
+  my ($code, $self, $arg) = @_;
+  return $self->$code($self->_trigger_parity($arg));
 };
 
-before 'set_stopbits' => sub {
-  my ($self, $arg) = @_;
-  $self->{stopbits} = $self->_trigger_stopbits($arg);
+around 'set_stopbits' => sub {
+  my ($code, $self, $arg) = @_;
+  return $self->$code($self->_trigger_stopbits($arg));
 };
 
-before 'set_rts' => sub {
-  my ($self, $arg) = @_;
-  $self->{rts} = $self->_trigger_rts($arg);
+around 'set_rts' => sub {
+  my ($code, $self, $arg) = @_;
+  return $self->$code($self->_trigger_rts($arg));
 };
 
-before 'set_cts' => sub {
-  my ($self, $arg) = @_;
-  $self->{cts} = $self->_trigger_cts($arg);
+around 'set_cts' => sub {
+  my ($code, $self, $arg) = @_;
+  return $self->$code($self->_trigger_cts($arg));
 };
 
-before 'set_dtr' => sub {
-  my ($self, $arg) = @_;
-  $self->{dtr} = $self->_trigger_dtr($arg);
+around 'set_dtr' => sub {
+  my ($code, $self, $arg) = @_;
+  return $self->$code($self->_trigger_dtr($arg));
 };
 
-before 'set_dsr' => sub {
-  my ($self, $arg) = @_;
-  $self->{dsr} = $self->_trigger_dsr($arg);
+around 'set_dsr' => sub {
+  my ($code, $self, $arg) = @_;
+  return $self->$code($self->_trigger_dsr($arg));
 };
 
-before 'set_xon_xoff' => sub {
-  my ($self, $arg) = @_;
-  $self->{xon_xoff} = $self->_trigger_xon_xoff($arg);
+around 'set_xon_xoff' => sub {
+  my ($code, $self, $arg) = @_;
+  return $self->$code($self->_trigger_xon_xoff($arg));
 };
 
-before 'set_flowcontrol' => sub {
-  my ($self, $arg) = @_;
-  $self->{flowcontrol} = $self->_trigger_flowcontrol($arg);
+around 'set_flowcontrol' => sub {
+  my ($code, $self, $arg) = @_;
+  return $self->$code($self->_trigger_flowcontrol($arg));
 };
 
 ##
@@ -597,7 +597,7 @@ sub blocking_read {
     SET_ERROR(EBADF); # Bad file descriptor
     return undef;
   }
-  unless ($self->get_mode & SP_MODE_READ) {
+  unless ($self->is_open and $self->get_mode & SP_MODE_READ) {
     # The handle argument is not a valid descriptor open for reading.
     SET_ERROR(EBADF); # Bad file descriptor
     return undef;
@@ -622,7 +622,7 @@ sub blocking_read_next {
     SET_ERROR(EBADF); # Bad file descriptor
     return undef;
   }
-  unless ($self->get_mode & SP_MODE_READ) {
+  unless ($self->is_open and $self->get_mode & SP_MODE_READ) {
     # The handle argument is not a valid descriptor open for reading.
     SET_ERROR(EBADF); # Bad file descriptor
     return undef;
@@ -646,7 +646,7 @@ sub nonblocking_read {
     SET_ERROR(EBADF); # Bad file descriptor
     return undef;
   }
-  unless ($self->get_mode & SP_MODE_READ) {
+  unless ($self->is_open and $self->get_mode & SP_MODE_READ) {
     # The handle argument is not a valid descriptor open for reading.
     SET_ERROR(EBADF); # Bad file descriptor
     return undef;
@@ -673,7 +673,7 @@ sub blocking_write {
     SET_ERROR(EBADF); # Bad file descriptor
     return undef;
   }
-  unless ($self->get_mode & SP_MODE_WRITE) {
+  unless ($self->is_open and $self->get_mode & SP_MODE_WRITE) {
     # An attempt is made to write to a port that is not open for reading by any process.
     SET_ERROR(EPIPE); # Broken pipe
     return undef;
@@ -698,7 +698,7 @@ sub nonblocking_write {
     SET_ERROR(EBADF); # Bad file descriptor
     return undef;
   }
-  unless ($self->get_mode & SP_MODE_WRITE) {
+  unless ($self->is_open and $self->get_mode & SP_MODE_WRITE) {
     # An attempt is made to write to a port that is not open for reading by any process.
     SET_ERROR(EPIPE); # Broken pipe
     return undef;

@@ -15,7 +15,7 @@ use Time::HiRes qw(sleep);  # for sleep function
 # cross platform serial port lib
 use Sigrok::SerialPort qw(:all);
 
-my $desired_port = "COM3";
+my $desired_port = "COM1";
 
 my $port;
 
@@ -30,9 +30,9 @@ sub list_ports {
     }
     sp_free_port_list(@ports);
   } else {
-    printf("No serial devices detected\n");
+    print("No serial devices detected\n");
   }
-  printf("\n");
+  print("\n");
 }
 
 sub parse_serial {
@@ -41,7 +41,7 @@ sub parse_serial {
   for (my $i = 0; $i < $byte_num; $i++) {
     printf("%c", $byte_buff[$i]);
   }
-  printf("\n");
+  print("\n");
 }
 
 sub main {
@@ -52,7 +52,7 @@ sub main {
   if ($error == SP_OK) {
     $error = sp_open($port, SP_MODE_READ);
     if ($error == SP_OK) {
-      sp_set_baudrate($port, 57600);
+      sp_set_baudrate($port, 9600); # 57600
       while (1) {
 
         sleep(0.5); # can do something else in mean time
@@ -69,13 +69,13 @@ sub main {
 
       sp_close($port);
     } else {
-      printf("Error opening serial device\n");
+      print("Error opening serial device\n");
     }
   } else {
-    printf("Error finding serial device\n");
+    print("Error finding serial device\n");
   }
 
   return 0;
 }
 
-exit main( @ARGV );
+exit main( 1+@ARGV, $0, @ARGV );
