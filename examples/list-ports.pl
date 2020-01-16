@@ -36,7 +36,7 @@ sub GetPort() {
 
    $port = 0;
 
-   do {
+   do {{
       $retval = sp_list_ports(\@portList);
 
       if ($retval == SP_OK) {
@@ -57,7 +57,7 @@ sub GetPort() {
       }
 
       sp_free_port_list(@portList) if @portList;
-   } while ($port == 0);
+   }} while ($port == 0);
 
    return $port;
 }
@@ -88,32 +88,34 @@ sub ConfigureSerialPort($) {
       }
    }
    else {
-      # workaround for windows bug 'DCB.fParity always FALSE after a GetCommState'
+      # workaround for windows bug 'dcb.fParity always FALSE after a GetCommState'
       my $config;
       if (sp_new_config(\$config) != SP_OK) {
          print("Unable to create new config.\n");
          $retval = -1;
-      } elsif (sp_get_config($port, $config) != SP_OK) {
-         print("Unable to get config.\n");
-         $retval = -1;
-      } elsif (sp_set_config_baudrate($config, $baudRate) != SP_OK) {
-         print("Unable to set config baudrate.\n");
-         $retval = -1;
-      } elsif (sp_set_config_bits($config, $bits) != SP_OK) {
-         print("Unable to set config width.\n");
-         $retval = -1;
-      } elsif (sp_set_config_parity($config, $parity) != SP_OK) {
-         print("Unable to set port parity.\n");
-         $retval = -1;
-      } elsif (sp_set_config_stopbits($config, $stopBits) != SP_OK) {
-         print("Unable to set port stop bits.\n");
-         $retval = -1;
-      } elsif (sp_set_config($port, $config) != SP_OK) {
-         print("Unable to set config.\n");
-         $retval = -1;
       } else {
+         if (sp_get_config($port, $config) != SP_OK) {
+            print("Unable to get config.\n");
+            $retval = -1;
+         } elsif (sp_set_config_baudrate($config, $baudRate) != SP_OK) {
+            print("Unable to set config baudrate.\n");
+            $retval = -1;
+         } elsif (sp_set_config_bits($config, $bits) != SP_OK) {
+            print("Unable to set config width.\n");
+            $retval = -1;
+         } elsif (sp_set_config_parity($config, $parity) != SP_OK) {
+            print("Unable to set config parity.\n");
+            $retval = -1;
+         } elsif (sp_set_config_stopbits($config, $stopBits) != SP_OK) {
+            print("Unable to set config stop bits.\n");
+            $retval = -1;
+         } elsif (sp_set_config($port, $config) != SP_OK) {
+            print("Unable to set config.\n");
+            $retval = -1;
+         } else {
+            print("Port configured.\n");
+         }
          sp_free_config($config);
-         print("Port configured.\n");
       }
    }
    

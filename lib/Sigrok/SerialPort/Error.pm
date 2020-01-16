@@ -29,10 +29,10 @@ use Sigrok::SerialPort qw( :error );
 
 sub SET_ERROR {
   my ($err, $extended) = pos_validated_list( \@_,
-    { isa => 'Maybe[Int]' },
+    { isa => 'Int', optional => 1 },
     { isa => 'Int', optional => 1 },
   );
-  $err = SP_ERR_FAIL unless defined $err;
+  $err = EFAULT unless defined $err;
   SWITCH: {
     $err == SP_OK       && do { $ERRNO = 0;       last };
     $err == SP_ERR_ARG  && do { $ERRNO = EINVAL;  last };
@@ -44,7 +44,7 @@ sub SET_ERROR {
   if ($extended) {
     $EXTENDED_OS_ERROR = $extended;
   }
-  elsif ($err != SP_ERR_FAIL) {
+  elsif ($err == SP_ERR_FAIL) {
     $EXTENDED_OS_ERROR = sp_last_error_code();
   }
   return 1;
@@ -216,7 +216,7 @@ J. Schneider L<https://github.com/brickpool>
 
 =item *
 
-Copyright (C) 2019 J. Schneider L<https://github.com/brickpool>
+Copyright (C) 2019, 2020 J. Schneider L<https://github.com/brickpool>
 
 =back
 

@@ -1,6 +1,6 @@
 =head1 NAME
 
-SerialPort version 0.02
+SerialPort version 0.3.0
 
 =head1 DESCRIPTION
 
@@ -12,10 +12,10 @@ In addition, a higher-level OOP interface is also provided by using C<Moose>.
 The library could build only on Windows and should work on Windows and
 Unix-based systems. If it does not, please submit a Issue.
 
-=head1 ALPHA WARNING
+=head1 WARNING
 
-This stuff is all still pretty new and I may break it while working on it,
-I may break compatibility with any given commit.
+This stuff is still fairly new and there is still a need for adjustment.
+While I'm working on it, backward compatibility can break with a given commit.
 
 =head1 INSTALLATION
 
@@ -65,7 +65,7 @@ L<https://sigrok.org/wiki/Libserialport>
 
 =item *
 
-J. Schneider E<lt>L<http://github.com/brickpool>E<gt>
+2019, 2020 J. Schneider E<lt>L<http://github.com/brickpool>E<gt>
 
 =back
 
