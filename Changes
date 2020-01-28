@@ -1,5 +1,14 @@
 Revision history for Perl extension Sigrok::SerialPort.
 
+0.3.1   2020-01-28
+  - change 'Moose' with 'Moo'
+  - change 'MooseX::Params::Validate' to 'Type::Tiny'
+  - add 'Function::Parameters' for public funcions and methods
+  - add a new Module 'Sigrok::SerialPort::Types' with all Types
+  - delete Types in 'Sigrok::SerialPort::Base'
+  - clean up of 'Maybe' in some 'attributes'
+  - fixing behavior of the return at 'undef' in the '_trigger ...' methods
+
 0.3.0   2020-01-16
   - change version numbering 'universum' from decimal AA.BBCC to semantic
     versioning (https://semver.org/spec/v2.0.0.html)

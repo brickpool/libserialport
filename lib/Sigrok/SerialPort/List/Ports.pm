@@ -1,8 +1,6 @@
 package Sigrok::SerialPort::List::Ports;
 
-use Moose;
-use Errno qw( :POSIX );
-
+# Serialport library
 use Sigrok::SerialPort qw(
   SP_OK
 
@@ -14,6 +12,15 @@ use Sigrok::SerialPort::Error qw(
 );
 use Sigrok::SerialPort::Port;
 
+# Standard packages
+use Errno qw( :POSIX );
+
+# Use of Modern Perl
+use Moo;
+use MooX::HandlesVia;
+#use namespace::autoclean;
+use Types::Standard qw( ArrayRef InstanceOf );
+
 extends 'Sigrok::SerialPort::Base';
 
 ##
@@ -23,19 +30,19 @@ extends 'Sigrok::SerialPort::Base';
 ##
 
 has 'port_list' => (
-  is        => 'ro',
-  isa       => 'ArrayRef[Sigrok::SerialPort::Port]',
-  required  => 1,
-  init_arg  => 'undef',
-  traits    => ['Array'],
-  handles   => {
-    count     => 'count',
-    is_empty  => 'is_empty',
-    elements  => 'elements',
-    get       => 'get',
+  is          => 'ro',
+  isa         => ArrayRef[InstanceOf['Sigrok::SerialPort::Port']],
+  required    => 1,
+  init_arg    => undef,
+  handles_via => 'Array',
+  handles     => {
+    count       => 'count',
+    is_empty    => 'is_empty',
+    elements    => 'elements',
+    get         => 'get',
   },
   # private methods
-  builder   => '_build_port_list',
+  builder     => '_build_port_list',
 );
 
 ##
@@ -68,7 +75,6 @@ sub _build_port_list {
   return \@ret_val;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+no Moo;
 
 1;

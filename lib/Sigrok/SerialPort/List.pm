@@ -1,21 +1,24 @@
 package Sigrok::SerialPort::List;
 
-use Moose;
-
+# Serialport library
 use Sigrok::SerialPort::List::Ports;
+
+# Use of Modern Perl
+use Moo;
+#use namespace::autoclean;
+use Types::Standard qw( InstanceOf );
 
 extends 'Sigrok::SerialPort::Base';
 
 has 'ports' => (
   is        => 'ro',
-  isa       => 'Sigrok::SerialPort::List::Ports',
+  isa       => InstanceOf['Sigrok::SerialPort::List::Ports'],
   required  => 1,
-  init_arg  => 'undef',
+  init_arg  => undef,
   default   => sub { Sigrok::SerialPort::List::Ports->new },
 );
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+no Moo;
 
 1;
 

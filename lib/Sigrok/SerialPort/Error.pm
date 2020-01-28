@@ -15,11 +15,16 @@ our @EXPORT_OK = qw(
   set_debug
 );
 
-use MooseX::Params::Validate;
+# Serialport library
+use Sigrok::SerialPort qw( :error );
+
+# Standard packages
 use English qw( -no_match_vars );
 use Errno qw( :POSIX );
 
-use Sigrok::SerialPort qw( :error );
+# Use of Modern Perl
+use Types::Standard qw( Bool Int );
+use Function::Parameters { func => 'function' };
 
 ##
 #
@@ -27,12 +32,7 @@ use Sigrok::SerialPort qw( :error );
 #
 ##
 
-sub SET_ERROR {
-  my ($err, $extended) = pos_validated_list( \@_,
-    { isa => 'Int', optional => 1 },
-    { isa => 'Int', optional => 1 },
-  );
-  $err = EFAULT unless defined $err;
+func SET_ERROR (Int $err = EFAULT, Int $extended = 0) {
   SWITCH: {
     $err == SP_OK       && do { $ERRNO = 0;       last };
     $err == SP_ERR_ARG  && do { $ERRNO = EINVAL;  last };
@@ -50,24 +50,21 @@ sub SET_ERROR {
   return 1;
 }
 
-sub last_error_code {
+func last_error_code() {
   return sp_last_error_code();
 }
 
-sub last_error_message {
+func last_error_message() {
   return sp_last_error_message();
 }
 
 my $_is_debug;
 
-sub is_debug {
+func is_debug() {
   return $_is_debug ? 1 : 0;
 }
 
-sub set_debug {
-  my ($debug) = pos_validated_list( \@_,
-    { isa => 'Bool' },
-  );
+func set_debug(Bool $debug) {
   $debug = $debug ? 1 : 0;
   unless ($debug == is_debug) {
     sp_set_debug($debug);

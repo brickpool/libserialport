@@ -1,7 +1,6 @@
 use strict;
 use Test::More tests => 14;
 
-use Sigrok::SerialPort qw( :const );
 use Sigrok::SerialPort::List;
 use Sigrok::SerialPort::Port;
 
@@ -27,10 +26,10 @@ SKIP: {
     unless defined $port;
 
   # open
-  ok $port->open(SP_MODE_READ_WRITE), 'Port->open';
+  ok $port->open('SP_MODE_READ_WRITE'), 'Port->open';
 
   # read
-  ok $port->flush(SP_BUF_INPUT), 'Port->flush';
+  ok $port->flush('SP_BUF_INPUT'), 'Port->flush';
   $num = $port->input_waiting;
   ok $num >= 0, 'Port->input_waiting';
 }
@@ -59,7 +58,7 @@ SKIP: {
 
   # write
   ok $port->drain, 'Port->drain';
-  ok $port->flush(SP_BUF_OUTPUT), 'Port->flush';
+  ok $port->flush('SP_BUF_OUTPUT'), 'Port->flush';
   $num = $port->output_waiting;
   is $num, 0, 'Port->output_waiting';
 }

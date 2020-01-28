@@ -1,11 +1,6 @@
 package Sigrok::SerialPort::Event;
 
-use Moose;
-use MooseX::Params::Validate;
-use Carp qw( croak );
-use English qw( -no_match_vars );
-use Errno qw( :POSIX );
-
+# Serialport library
 use Sigrok::SerialPort qw(
   SP_OK
 
@@ -14,9 +9,25 @@ use Sigrok::SerialPort qw(
   sp_wait
   sp_free_event_set
 );
+use Sigrok::SerialPort::Types qw(
+  Int_sp_event
+  Int_sp_event_set
+);
 use Sigrok::SerialPort::Error qw(
   SET_ERROR
 );
+
+# Standard packages
+use Carp qw( croak );
+use English qw( -no_match_vars );
+use Errno qw( :POSIX );
+
+# Use of Modern Perl
+use Moo;
+#use namespace::autoclean;
+use Types::Standard qw( Object InstanceOf Optional );
+use Types::Common::Numeric qw( PositiveOrZeroInt );
+use Type::Params qw( validate );
 
 extends 'Sigrok::SerialPort::Base';
 
@@ -27,7 +38,8 @@ extends 'Sigrok::SerialPort::Base';
 ##
 
 has 'event_set' => (
-  isa       => 'sp_event_set',
+  is        => 'ro',
+  isa       => Int_sp_event_set,
   required  => 1,
   lazy      => 1,
   init_arg  => 'handle',
@@ -37,9 +49,10 @@ has 'event_set' => (
 );
 
 has 'timeout' => (
-  isa       => 'Maybe[unsigned_int]',
+  is        => 'rw',
+  isa       => PositiveOrZeroInt,
   required  => 1,
-  init_arg  => 'undef',
+  init_arg  => undef,
   default   => 0,
   writer    => 'wait',
   # private methods
@@ -53,19 +66,33 @@ has 'timeout' => (
 ##
 
 has '_port' => (
-  isa       => 'Sigrok::SerialPort::Port',
+  is        => 'ro',
+  isa       => InstanceOf['Sigrok::SerialPort::Port'],
   init_arg  => 'port',
   # private methods
   reader    => '_get_port',
 );
 
 has '_mask' => (
-  isa       => 'sp_event',
+  is        => 'ro',
+  isa       => Int_sp_event,
+  coerce    => 1,
   init_arg  => 'mask',
   # private methods
   reader    => '_get_mask',
 );
 
+##
+#
+# extends accessor methods
+#
+##
+
+around 'wait' => sub {
+  my ($code, $self, $arg) = @_;
+  my $ret_val = $self->_trigger_wait($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
+};
 
 ##
 #
@@ -100,10 +127,10 @@ sub DEMOLISH {
 ##
 
 sub add_port_events {
-  my $self = shift;
-  my ($port, $mask) = pos_validated_list( \@_,
-    { isa => 'Sigrok::SerialPort::Port' },
-    { isa => 'sp_event' },
+  my ($self, $port, $mask) = validate( \@_,
+    Object,
+    InstanceOf['Sigrok::SerialPort::Port'],
+    Int_sp_event,
   );
   unless ($self->get_handle) {
     # The value of the config argument is invalid.
@@ -152,10 +179,10 @@ sub _build_handle {
 ##
 
 sub _trigger_wait {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'unsigned_int' },
-    { isa => 'unsigned_int', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    PositiveOrZeroInt,
+    Optional[PositiveOrZeroInt],
   );
   unless ($self->get_handle) {
     # The value of the config argument is invalid.
@@ -187,7 +214,6 @@ sub _free_handle {
   return 1;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+no Moo;
 
 1;

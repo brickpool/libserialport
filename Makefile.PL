@@ -32,8 +32,11 @@ WriteMakefile(
     'English'                   => 1.04,
     'Errno'                     => 1.11,
     'Exporter'                  => 5.6401,
-    'Moose'                     => 2.0007,
-    'MooseX::Params::Validate'  => 0.18,
+#    'Moose'                     => 2.0007,
+#    'MooseX::Params::Validate'  => 0.18,
+    'Moo'                       => 2.003004,
+    'Type::Tiny'                => 1.002001,
+    'Function-Parameters'       => 2001003,
     'XSLoader'                  => 0.10,
   },
   TEST_REQUIRES       => {

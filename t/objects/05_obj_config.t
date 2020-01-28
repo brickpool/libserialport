@@ -29,7 +29,7 @@ SKIP: {
 
   # init
   ok $config = $port->config,   'Port->config';
-  ok $port->config($config), 'Port->config(...)';
+  ok $port->config($config),    'Port->config(...)';
   ok $port->open(SP_MODE_READ), 'Port->open';
 
   # get and set config
@@ -60,10 +60,10 @@ SKIP: {
   
   # parity
   my $parity;
-  is $config->set_parity(-1),                         -1, 'Config->set_parity';
-  is $config->set_parity(SP_PARITY_EVEN), SP_PARITY_EVEN, 'Config->set_parity';
-  is $parity = $config->get_parity,       SP_PARITY_EVEN, 'Config->get_parity';
-  is $port->set_parity($parity),          SP_PARITY_EVEN, 'Port->set_parity';
+  is $config->set_parity(-1),                           -1, 'Config->set_parity';
+  is $config->set_parity('SP_PARITY_EVEN'), SP_PARITY_EVEN, 'Config->set_parity';
+  is $parity = $config->get_parity,         SP_PARITY_EVEN, 'Config->get_parity';
+  is $port->set_parity($parity),            SP_PARITY_EVEN, 'Port->set_parity';
   
   ## stop bits
   my $stopbits;
@@ -74,42 +74,42 @@ SKIP: {
 
   # rts
   my $rts;
-  is $config->set_rts(-1),               -1, 'Config->set_rts';
-  is $config->set_rts(SP_RTS_ON), SP_RTS_ON, 'Config->set_rts';
-  is $rts = $config->get_rts,     SP_RTS_ON, 'Config->get_rts';
-  is $port->set_rts($rts),        SP_RTS_ON, 'Port->set_rts';
+  is $config->set_rts(-1),                 -1, 'Config->set_rts';
+  is $config->set_rts('SP_RTS_ON'), SP_RTS_ON, 'Config->set_rts';
+  is $rts = $config->get_rts,       SP_RTS_ON, 'Config->get_rts';
+  is $port->set_rts($rts),          SP_RTS_ON, 'Port->set_rts';
 
   # cts
   my $cts;
-  is $config->set_cts(-1),                       -1, 'Config->set_cts';
-  is $config->set_cts(SP_CTS_IGNORE), SP_CTS_IGNORE, 'Config->set_cts';
-  is $cts = $config->get_cts,         SP_CTS_IGNORE, 'Config->get_cts';
-  is $port->set_cts($cts),            SP_CTS_IGNORE, 'Port->set_cts';
+  is $config->set_cts(-1),                         -1, 'Config->set_cts';
+  is $config->set_cts('SP_CTS_IGNORE'), SP_CTS_IGNORE, 'Config->set_cts';
+  is $cts = $config->get_cts,           SP_CTS_IGNORE, 'Config->get_cts';
+  is $port->set_cts($cts),              SP_CTS_IGNORE, 'Port->set_cts';
 
   # dtr
   my $dtr;
-  is $config->set_dtr(-1),               -1, 'Config->set_dtr';
-  is $config->set_dtr(SP_DTR_ON), SP_DTR_ON, 'Config->set_dtr';
-  is $dtr = $config->get_dtr,     SP_DTR_ON, 'Config->get_dtr';
-  is $port->set_dtr($dtr),        SP_DTR_ON, 'Port->set_dtr';
+  is $config->set_dtr(-1),                 -1, 'Config->set_dtr';
+  is $config->set_dtr('SP_DTR_ON'), SP_DTR_ON, 'Config->set_dtr';
+  is $dtr = $config->get_dtr,       SP_DTR_ON, 'Config->get_dtr';
+  is $port->set_dtr($dtr),          SP_DTR_ON, 'Port->set_dtr';
 
   # dsr
   my $dsr;
-  is $config->set_dsr(-1),                       -1, 'Config->set_dsr';
-  is $config->set_dsr(SP_DSR_IGNORE), SP_DSR_IGNORE, 'Config->set_dsr';
-  is $dsr = $config->get_dsr,         SP_DSR_IGNORE, 'Config->get_dsr';
-  is $port->set_dsr($dsr),            SP_DSR_IGNORE, 'Port->set_dsr';
+  is $config->set_dsr(-1),                         -1, 'Config->set_dsr';
+  is $config->set_dsr('SP_DSR_IGNORE'), SP_DSR_IGNORE, 'Config->set_dsr';
+  is $dsr = $config->get_dsr,           SP_DSR_IGNORE, 'Config->get_dsr';
+  is $port->set_dsr($dsr),              SP_DSR_IGNORE, 'Port->set_dsr';
 
   ## xon/xoff
   my $xonxoff;
-  is $config->set_xon_xoff(-1),                                    -1, 'Config->set_xon_xoff';
-  is $config->set_xon_xoff(SP_XONXOFF_DISABLED),  SP_XONXOFF_DISABLED, 'Config->set_xon_xoff';
-  is $xonxoff = $config->get_xon_xoff,            SP_XONXOFF_DISABLED, 'Config->get_xon_xoff';
-  is $port->set_xon_xoff($xonxoff),               SP_XONXOFF_DISABLED, 'Port->set_xon_xoff';
+  is $config->set_xon_xoff(-1),                                      -1, 'Config->set_xon_xoff';
+  is $config->set_xon_xoff('SP_XONXOFF_DISABLED'),  SP_XONXOFF_DISABLED, 'Config->set_xon_xoff';
+  is $xonxoff = $config->get_xon_xoff,              SP_XONXOFF_DISABLED, 'Config->get_xon_xoff';
+  is $port->set_xon_xoff($xonxoff),                 SP_XONXOFF_DISABLED, 'Port->set_xon_xoff';
 
   # flowcontrol
-  is $config->set_flowcontrol(SP_FLOWCONTROL_NONE), SP_FLOWCONTROL_NONE, 'Config->set_flowcontrol';
-  is $port->set_flowcontrol(SP_FLOWCONTROL_NONE),   SP_FLOWCONTROL_NONE, 'Port->set_flowcontrol';
+  is $config->set_flowcontrol('SP_FLOWCONTROL_NONE'), SP_FLOWCONTROL_NONE, 'Config->set_flowcontrol';
+  is $port->set_flowcontrol('SP_FLOWCONTROL_NONE'),   SP_FLOWCONTROL_NONE, 'Port->set_flowcontrol';
 
   # close
   ok $port->close(), 'Port->close';

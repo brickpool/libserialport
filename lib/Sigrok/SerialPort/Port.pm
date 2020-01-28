@@ -1,12 +1,6 @@
 package Sigrok::SerialPort::Port;
 
-use Moose;
-use Moose::Util::TypeConstraints;
-use MooseX::Params::Validate;
-use Carp qw( croak );
-use English qw( -no_match_vars );
-use Errno qw( :POSIX );
-
+# Serialport library
 use Sigrok::SerialPort qw(
   SP_OK
 
@@ -66,10 +60,40 @@ use Sigrok::SerialPort qw(
   sp_start_break
   sp_end_break
 );
+use Sigrok::SerialPort::Types qw(
+  Int_sp_port
+  Int_sp_mode
+  Int_sp_buffer
+  Int_sp_parity
+  Int_sp_rts
+  Int_sp_cts
+  Int_sp_dtr
+  Int_sp_dsr
+  Int_sp_xonxoff
+  Int_sp_flowcontrol
+  Int_sp_signal
+  Int_sp_transport
+  Int_sp_baudrate
+  Int_sp_databits
+  Int_sp_stopbits
+);
 use Sigrok::SerialPort::Error qw(
   SET_ERROR
 );
 use Sigrok::SerialPort::Port::Config;
+
+# Standard packages
+use Carp qw( croak );
+use English qw( -no_match_vars );
+use Errno qw( :POSIX );
+
+# Use of Modern Perl
+use Moo;
+#use namespace::autoclean;
+use Types::Standard qw( Any Bool Int Object Str Maybe InstanceOf Optional );
+use Types::Common::Numeric qw( PositiveOrZeroInt );
+use Type::Params qw( validate );
+use Function::Parameters;
 
 extends 'Sigrok::SerialPort::Base';
 
@@ -80,8 +104,9 @@ extends 'Sigrok::SerialPort::Base';
 ##
 
 has 'port_handle' => (
-  isa       => 'sp_port',
-  init_arg  => 'undef',
+  is        => 'ro',
+  isa       => Int_sp_port,
+  init_arg  => undef,
   reader    => 'get_handle',
 );
 
@@ -92,120 +117,134 @@ has 'port_handle' => (
 ##
 
 has 'mode' => (
-  isa       => 'Maybe[sp_mode]',
+  is        => 'ro',
+  isa       => Int_sp_mode,
+  coerce    => 1,
   reader    => 'get_mode',
 );
 
 has 'is_open' => (
   is        => 'ro',
-  isa       => 'Bool',
-  init_arg  => 'undef',
+  isa       => Bool,
+  init_arg  => undef,
   default   => 0,
 );
 
 has 'name' => (
-  isa       => 'Maybe[Str]',
+  is        => 'ro',
+  isa       => Maybe[Str],
   lazy      => 1,
-  init_arg  => 'undef',
+  init_arg  => undef,
   reader    => 'get_name',
   # private methods
   builder   => '_build_name',
 );
 
 has 'description' => (
-  isa       => 'Maybe[Str]',
+  is        => 'ro',
+  isa       => Maybe[Str],
   lazy      => 1,
-  init_arg  => 'undef',
+  init_arg  => undef,
   reader    => 'get_description',
   # private methods
   builder   => '_build_description',
 );
 
 has 'transport' => (
-  isa       => 'Maybe[sp_transport]',
+  is        => 'ro',
+  isa       => Maybe[Int_sp_transport],
   lazy      => 1,
-  init_arg  => 'undef',
+  init_arg  => undef,
   reader    => 'get_transport',
   # private methods
   builder   => '_build_transport',
 );
 
 has 'usb_bus' => (
-  isa       => 'Maybe[Int]',
+  is        => 'ro',
+  isa       => Maybe[Int],
   lazy      => 1,
-  init_arg  => 'undef',
+  init_arg  => undef,
   reader    => 'get_usb_bus',
   # private methods
   builder   => '_build_usb_bus',
 );
 
 has 'usb_address' => (
-  isa       => 'Maybe[Int]',
+  is        => 'ro',
+  isa       => Maybe[Int],
   lazy      => 1,
-  init_arg  => 'undef',
+  init_arg  => undef,
   reader    => 'get_usb_address',
   # private methods
   builder   => '_build_usb_address',
 );
 
 has 'usb_vid' => (
-  isa       => 'Maybe[Int]',
+  is        => 'ro',
+  isa       => Maybe[Int],
   lazy      => 1,
-  init_arg  => 'undef',
+  init_arg  => undef,
   reader    => 'get_usb_vid',
   # private methods
   builder   => '_build_usb_vid',
 );
 
 has 'usb_pid' => (
-  isa       => 'Maybe[Int]',
+  is        => 'ro',
+  isa       => Maybe[Int],
   lazy      => 1,
-  init_arg  => 'undef',
+  init_arg  => undef,
   reader    => 'get_usb_pid',
   # private methods
   builder   => '_build_usb_pid',
 );
 
 has 'usb_manufacturer' => (
-  isa       => 'Maybe[Str]',
+  is        => 'ro',
+  isa       => Maybe[Str],
   lazy      => 1,
-  init_arg  => 'undef',
+  init_arg  => undef,
   reader    => 'get_usb_manufacturer',
   # private methods
   builder   => '_build_usb_manufacturer',
 );
 
 has 'usb_product' => (
-  isa       => 'Maybe[Str]',
+  is        => 'ro',
+  isa       => Maybe[Str],
   lazy      => 1,
-  init_arg  => 'undef',
+  init_arg  => undef,
   reader    => 'get_usb_product',
   # private methods
   builder   => '_build_usb_product',
 );
 
 has 'usb_serial' => (
-  isa       => 'Maybe[Str]',
+  is        => 'ro',
+  isa       => Maybe[Str],
   lazy      => 1,
-  init_arg  => 'undef',
+  init_arg  => undef,
   reader    => 'get_usb_serial',
   # private methods
   builder   => '_build_usb_serial',
 );
 
 has 'bluetooth_address' => (
-  isa       => 'Maybe[Str]',
+  is        => 'ro',
+  isa       => Maybe[Str],
   lazy      => 1,
-  init_arg  => 'undef',
+  init_arg  => undef,
   reader    => 'get_bluetooth_address',
   # private methods
   builder   => '_build_bluetooth_address',
 );
 
 has 'native_handle' => (
-  isa       => 'Any',
+  is        => 'ro',
+  isa       => Any,
   lazy      => 1,
-  init_arg  => 'undef',
+  init_arg  => undef,
   reader    => 'get_native_handle',
   # private methods
   builder   => '_build_native_handle',
@@ -219,58 +258,73 @@ has 'native_handle' => (
 
 has 'config' => (
   is          => 'rw',
-  isa         => 'Sigrok::SerialPort::Port::Config',
-  lazy_build  => 1,
-  init_arg    => 'undef',
+  isa         => InstanceOf['Sigrok::SerialPort::Port::Config'],
+  init_arg    => undef,
+  # lazy_build is not supported by Moo
+  lazy        => 1,
+  required    => 1,
+  clearer     => 'clear_config',
+  predicate   => 'has_config',
+  builder     => '_build_config'
 );
 
 has 'baudrate' => (
-  isa       => 'Maybe[sp_baudrate]',
+  is        => 'rw',
+  isa       => Int_sp_baudrate,
   writer    => 'set_baudrate',
 );
 
 has 'bits' => (
-  isa       => 'Maybe[sp_databits]',
+  is        => 'rw',
+  isa       => Int_sp_databits,
   writer    => 'set_bits',
 );
 
 has 'parity' => (
-  isa       => 'Maybe[sp_parity]',
+  is        => 'rw',
+  isa       => Int_sp_parity,
   writer    => 'set_parity',
 );
 
 has 'stopbits' => (
-  isa       => 'Maybe[sp_stopbits]',
+  is        => 'rw',
+  isa       => Int_sp_stopbits,
   writer    => 'set_stopbits',
 );
 
 has 'rts' => (
-  isa       => 'Maybe[sp_rts]',
+  is        => 'rw',
+  isa       => Int_sp_rts,
   writer    => 'set_rts',
 );
 
 has 'cts' => (
-  isa       => 'Maybe[sp_cts]',
+  is        => 'rw',
+  isa       => Int_sp_cts,
   writer    => 'set_cts',
 );
 
 has 'dtr' => (
-  isa       => 'Maybe[sp_dtr]',
+  is        => 'rw',
+  isa       => Int_sp_dtr,
   writer    => 'set_dtr',
 );
 
 has 'dsr' => (
-  isa       => 'Maybe[sp_dsr]',
+  is        => 'rw',
+  isa       => Int_sp_dsr,
   writer    => 'set_dsr',
 );
 
 has 'xon_xoff' => (
-  isa       => 'Maybe[sp_xonxoff]',
+  is        => 'rw',
+  isa       => Int_sp_xonxoff,
   writer    => 'set_xon_xoff',
 );
 
 has 'flowcontrol' => (
-  isa       => 'Maybe[sp_flowcontrol]',
+  is        => 'rw',
+  isa       => Int_sp_flowcontrol,
   writer    => 'set_flowcontrol',
 );
 
@@ -281,8 +335,9 @@ has 'flowcontrol' => (
 ##
 
 has 'buffers' => (
-  isa       => 'sp_buffer',
-  init_arg  => 'undef',
+  is        => 'rw',
+  isa       => Int_sp_buffer,
+  init_arg  => undef,
   writer    => 'flush',
   # private methods
   trigger   => \&_trigger_flush,
@@ -295,9 +350,10 @@ has 'buffers' => (
 ##
 
 has 'signal_mask' => (
-  isa       => 'Maybe[sp_signal]',
+  is        => 'ro',
+  isa       => Maybe[Int_sp_signal],
   lazy      => 1,
-  init_arg  => 'undef',
+  init_arg  => undef,
   reader    => 'get_signals',
   # private methods
   builder   => '_build_signals',
@@ -309,20 +365,21 @@ has 'signal_mask' => (
 #
 ##
 
-coerce 'sp_port' =>
-  from 'Sigrok::SerialPort::Port' =>
-  via { $_->get_handle };
-
 has '_copy_handle' => (
-  isa       => 'sp_port',
-  init_arg  => 'handle',
+  is        => 'ro',
+  isa       => Int_sp_port->plus_coercions (
+    InstanceOf['Sigrok::SerialPort::Port'],
+    sub { $_->get_handle },
+  ),
   coerce    => 1,
+  init_arg  => 'handle',
   # private methods
   reader    => '_get_copy_handle',
 );
 
 has '_name' => (
-  isa       => 'Str',
+  is        => 'ro',
+  isa       => Str,
   init_arg  => 'portname',
   # private methods
   reader    => '_get_name',
@@ -337,14 +394,17 @@ has '_name' => (
 # We provide 'port' as an alternate init_arg for '_copy_handle'
 
 around BUILDARGS => sub {
-  my $orig = shift;
+  my $code = shift;
   my $self = shift;
-  my %args = ref $_[0] ? %{shift()} : @_;
+  my %args = ref $_[0] ? %{$_[0]} : @_;
+
+  # remove undefined keys from a hash
+  delete @args{ grep { not defined $args{$_} } keys %args };
 
   if (exists $args{port}) {
     $args{handle} = delete $args{port};
   }
-  $self->$orig(%args);
+  $self->$code(%args);
 };
   
 after 'config' => sub {
@@ -356,52 +416,68 @@ after 'config' => sub {
 
 around 'set_baudrate' => sub {
   my ($code, $self, $arg) = @_;
-  return $self->$code($self->_trigger_baudrate($arg));
+  my $ret_val = $self->_trigger_baudrate($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
 };
 
 around 'set_bits' => sub {
   my ($code, $self, $arg) = @_;
-  return $self->$code($self->_trigger_bits($arg));
+  my $ret_val = $self->_trigger_bits($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
 };
 
 around 'set_parity' => sub {
   my ($code, $self, $arg) = @_;
-  return $self->$code($self->_trigger_parity($arg));
+  my $ret_val = $self->_trigger_parity($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
 };
 
 around 'set_stopbits' => sub {
   my ($code, $self, $arg) = @_;
-  return $self->$code($self->_trigger_stopbits($arg));
+  my $ret_val = $self->_trigger_stopbits($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
 };
 
 around 'set_rts' => sub {
   my ($code, $self, $arg) = @_;
-  return $self->$code($self->_trigger_rts($arg));
+  my $ret_val = $self->_trigger_rts($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
 };
 
 around 'set_cts' => sub {
   my ($code, $self, $arg) = @_;
-  return $self->$code($self->_trigger_cts($arg));
+  my $ret_val = $self->_trigger_cts($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
 };
 
 around 'set_dtr' => sub {
   my ($code, $self, $arg) = @_;
-  return $self->$code($self->_trigger_dtr($arg));
+  my $ret_val = $self->_trigger_dtr($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
 };
 
 around 'set_dsr' => sub {
   my ($code, $self, $arg) = @_;
-  return $self->$code($self->_trigger_dsr($arg));
+  my $ret_val = $self->_trigger_dsr($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
 };
 
 around 'set_xon_xoff' => sub {
   my ($code, $self, $arg) = @_;
-  return $self->$code($self->_trigger_xon_xoff($arg));
+  my $ret_val = $self->_trigger_xon_xoff($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
 };
 
 around 'set_flowcontrol' => sub {
   my ($code, $self, $arg) = @_;
-  return $self->$code($self->_trigger_flowcontrol($arg));
+  my $ret_val = $self->_trigger_flowcontrol($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
+};
+
+around 'flush' => sub {
+  my ($code, $self, $arg) = @_;
+  my $ret_val = $self->_trigger_flush($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
 };
 
 ##
@@ -412,8 +488,6 @@ around 'set_flowcontrol' => sub {
 
 sub BUILD {
   my $self = shift;
-  # remove undefined keys from a hash
-  delete @$self{ grep { not defined $self->{$_} } keys %$self };
 
   # initialize the port first ..
   if (defined $self->{_copy_handle}) {
@@ -469,10 +543,10 @@ sub DEMOLISH {
 #
 ##
 
-sub open {
-  my $self = shift;
-  my ($mode) = pos_validated_list( \@_,
-    { isa => 'sp_mode' },
+sub open($$) {
+  my ($self, $mode) = validate( \@_,
+    Object,
+    Int_sp_mode,
   );
   $self->{mode} = $mode;
   my $ret_val = $self->_open_port($self->get_mode);
@@ -482,29 +556,28 @@ sub open {
   return $self->is_open;
 }
 
-sub close {
-  my $self = shift;
+method close() {
   my $ret_val = $self->_close_port;
   $self->{is_open} = 0;
   return $ret_val;
 }
 
-sub is_native {
-  my $ret_val = shift->get_transport;
+method is_native() {
+  my $ret_val = $self->get_transport;
   defined ($ret_val)
     or return undef;
   return $ret_val == SP_TRANSPORT_NATIVE;
 }
 
-sub is_usb {
-  my $ret_val = shift->get_transport;
+method is_usb() {
+  my $ret_val = $self->get_transport;
   defined ($ret_val)
     or return undef;
   return $ret_val == SP_TRANSPORT_USB;
 }
 
-sub is_bluetooth {
-  my $ret_val = shift->get_transport;
+method is_bluetooth() {
+  my $ret_val = $self->get_transport;
   defined ($ret_val)
     or return undef;
   return $ret_val == SP_TRANSPORT_BLUETOOTH;
@@ -543,12 +616,12 @@ sub get_usb {
   return wantarray ? @ret_list : $cnt;
 }
 
-sub cget {
+method cget(Str $option) {
   # we use the getter method here to read the config.
-  my $config = shift->config;
+  my $config = $self->config;
   defined $config
     or return wantarray ? () : undef;
-  return $config->cget(@_);
+  return $config->cget($option);
 }
 
 sub configure {
@@ -559,8 +632,7 @@ sub configure {
   return $config->configure(@_);
 }
 
-sub write_settings {
-  my $self = shift;
+method write_settings() {
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
     SET_ERROR(EBADF); # Bad file descriptor
@@ -586,12 +658,7 @@ sub write_settings {
   return 1;
 };
 
-sub blocking_read {
-  my $self = shift;
-  my ($count, $timeout) = pos_validated_list( \@_,
-    { isa => 'size_t'       },
-    { isa => 'unsigned_int' },
-  );
+method blocking_read(PositiveOrZeroInt $count, PositiveOrZeroInt $timeout) {
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
     SET_ERROR(EBADF); # Bad file descriptor
@@ -611,12 +678,7 @@ sub blocking_read {
   return $ret_val, $ret_buf;
 }
 
-sub blocking_read_next {
-  my $self = shift;
-  my ($count, $timeout) = pos_validated_list( \@_,
-    { isa => 'size_t'       },
-    { isa => 'unsigned_int' },
-  );
+method blocking_read_next(PositiveOrZeroInt $count, PositiveOrZeroInt $timeout) {
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
     SET_ERROR(EBADF); # Bad file descriptor
@@ -636,11 +698,7 @@ sub blocking_read_next {
   return $ret_val, $ret_buf;
 }
 
-sub nonblocking_read {
-  my $self = shift;
-  my ($count) = pos_validated_list( \@_,
-    { isa => 'size_t' },
-  );
+method nonblocking_read(PositiveOrZeroInt $count) {
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
     SET_ERROR(EBADF); # Bad file descriptor
@@ -660,14 +718,7 @@ sub nonblocking_read {
   return $ret_val, $ret_buf;
 }
 
-sub blocking_write {
-  my $self = shift;
-  # we create a scalar reference for the buffer argument to save a string copy
-  my ($buf, $count, $timeout) = pos_validated_list( [\shift, @_],
-    { isa => 'ScalarRef[Str]' },
-    { isa => 'size_t'         },
-    { isa => 'unsigned_int'   },
-  );
+method blocking_write(Str $buf, PositiveOrZeroInt $count, PositiveOrZeroInt $timeout) {
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
     SET_ERROR(EBADF); # Bad file descriptor
@@ -678,7 +729,7 @@ sub blocking_write {
     SET_ERROR(EPIPE); # Broken pipe
     return undef;
   }
-  my $ret_val = sp_blocking_write($self->get_handle, $$buf, $count, $timeout);
+  my $ret_val = sp_blocking_write($self->get_handle, $buf, $count, $timeout);
   unless ($ret_val >= 0) {
     SET_ERROR($ret_val);
     return undef;
@@ -686,13 +737,7 @@ sub blocking_write {
   return $ret_val;
 }
 
-sub nonblocking_write {
-  my $self = shift;
-  # we create a scalar reference for the buffer argument to save a string copy
-  my ($buf, $count) = pos_validated_list( [\shift, @_],
-    { isa => 'ScalarRef[Str]' },
-    { isa => 'size_t'         },
-  );
+method nonblocking_write(Str $buf, PositiveOrZeroInt $count) {
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
     SET_ERROR(EBADF); # Bad file descriptor
@@ -703,7 +748,7 @@ sub nonblocking_write {
     SET_ERROR(EPIPE); # Broken pipe
     return undef;
   }
-  my $ret_val = sp_nonblocking_write($self->get_handle, $$buf, $count);
+  my $ret_val = sp_nonblocking_write($self->get_handle, $buf, $count);
   unless ($ret_val >= 0) {
     SET_ERROR($ret_val);
     return undef;
@@ -711,8 +756,7 @@ sub nonblocking_write {
   return $ret_val;
 }
 
-sub input_waiting {
-  my $self = shift;
+method input_waiting() {
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
     SET_ERROR(EBADF); # Bad file descriptor
@@ -726,8 +770,7 @@ sub input_waiting {
   return $ret_val;
 }
 
-sub output_waiting {
-  my $self = shift;
+method output_waiting() {
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
     SET_ERROR(EBADF); # Bad file descriptor
@@ -741,8 +784,7 @@ sub output_waiting {
   return $ret_val;
 }
 
-sub drain {
-  my $self = shift;
+method drain() {
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
     SET_ERROR(EBADF); # Bad file descriptor
@@ -756,8 +798,7 @@ sub drain {
   return 1;
 }
 
-sub start_break {
-  my $self = shift;
+method start_break() {
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
     SET_ERROR(EBADF); # Bad file descriptor
@@ -771,8 +812,7 @@ sub start_break {
   return 1;
 }
 
-sub end_break {
-  my $self = shift;
+method end_break() {
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
     SET_ERROR(EBADF); # Bad file descriptor
@@ -786,29 +826,29 @@ sub end_break {
   return 1;
 }
 
-sub get_cts {
-  my $signal = shift->get_signal;
+method get_cts() {
+  my $signal = $self->get_signal;
   defined $signal
     or return undef;
   return $signal & SP_SIG_CTS ? 1 : 0;
 }
 
-sub get_dsr {
-  my $signal = shift->get_signal;
+method get_dsr() {
+  my $signal = $self->get_signal;
   defined $signal
     or return undef;
   return $signal & SP_SIG_DSR ? 1 : 0;
 }
 
-sub get_rlsd {
-  my $signal = shift->get_signal;
+method get_rlsd() {
+  my $signal = $self->get_signal;
   defined $signal
     or return undef;
   return $signal & SP_SIG_DCD ? 1 : 0;
 }
 
-sub get_ring {
-  my $signal = shift->get_signal;
+method get_ring() {
+  my $signal = $self->get_signal;
   defined $signal
     or return undef;
   return $signal & SP_SIG_RI ? 1 : 0;
@@ -1120,10 +1160,10 @@ sub _build_signals {
 ##
 
 sub _trigger_baudrate {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_baudrate' },
-    { isa => 'sp_baudrate', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_baudrate,
+    Optional[Int_sp_baudrate],
   );
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
@@ -1144,10 +1184,10 @@ sub _trigger_baudrate {
 }
 
 sub _trigger_bits {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_databits' },
-    { isa => 'sp_databits', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_databits,
+    Optional[Int_sp_databits],
   );
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
@@ -1168,10 +1208,10 @@ sub _trigger_bits {
 }
 
 sub _trigger_parity {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_parity' },
-    { isa => 'sp_parity', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_parity,
+    Optional[Int_sp_parity]
   );
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
@@ -1192,10 +1232,10 @@ sub _trigger_parity {
 }
 
 sub _trigger_stopbits {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_stopbits' },
-    { isa => 'sp_stopbits', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_stopbits,
+    Optional[Int_sp_stopbits],
   );
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
@@ -1216,10 +1256,10 @@ sub _trigger_stopbits {
 }
 
 sub _trigger_rts {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_rts' },
-    { isa => 'sp_rts', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_rts,
+    Optional[Int_sp_rts],
   );
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
@@ -1240,10 +1280,10 @@ sub _trigger_rts {
 }
 
 sub _trigger_cts {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_cts' },
-    { isa => 'sp_cts', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_cts,
+    Optional[Int_sp_cts],
   );
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
@@ -1264,10 +1304,10 @@ sub _trigger_cts {
 }
 
 sub _trigger_dtr {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_dtr' },
-    { isa => 'sp_dtr', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_dtr,
+    Optional[Int_sp_dtr],
   );
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
@@ -1288,10 +1328,10 @@ sub _trigger_dtr {
 }
 
 sub _trigger_dsr {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_dsr' },
-    { isa => 'sp_dsr', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_dsr,
+    Optional[Int_sp_dsr],
   );
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
@@ -1312,10 +1352,10 @@ sub _trigger_dsr {
 }
 
 sub _trigger_xon_xoff {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_xonxoff' },
-    { isa => 'sp_xonxoff', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_xonxoff,
+    Optional[Int_sp_xonxoff],
   );
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
@@ -1336,10 +1376,10 @@ sub _trigger_xon_xoff {
 }
 
 sub _trigger_flowcontrol {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_flowcontrol' },
-    { isa => 'sp_flowcontrol', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_flowcontrol,
+    Optional[Int_sp_flowcontrol],
   );
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
@@ -1360,10 +1400,10 @@ sub _trigger_flowcontrol {
 }
 
 sub _trigger_flush {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_buffer' },
-    { isa => 'sp_buffer', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_buffer,
+    Optional[Int_sp_buffer],
   );
   unless ($self->get_handle) {
     # The file descriptor underlying stream is not valid.
@@ -1400,9 +1440,9 @@ sub _free_port {
 }
 
 sub _open_port {
-  my $self = shift;
-  my ($mode) = pos_validated_list( \@_,
-    { isa => 'sp_mode' },
+  my ($self, $mode) = validate( \@_,
+    Object,
+    Int_sp_mode,
   );
   unless ($self->get_handle) {
     # The handle argument is not a valid port descriptor.
@@ -1465,8 +1505,7 @@ sub _get_config {
   return 1;
 };
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+no Moo;
 
 1;
 

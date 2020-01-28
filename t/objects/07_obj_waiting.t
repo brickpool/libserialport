@@ -24,8 +24,8 @@ SKIP: {
     unless defined $port;
 
   # open
-  is $port->open(SP_MODE_READ), SP_MODE_READ, 'Port->open';
-  ok eval { $event = Sigrok::SerialPort::Event->new(port => $port, mask => SP_EVENT_TX_READY) }, 'Event->new';
+  is $port->open('SP_MODE_READ'), SP_MODE_READ, 'Port->open';
+  ok eval { $event = Sigrok::SerialPort::Event->new(port => $port, mask => 'SP_EVENT_TX_READY') }, 'Event->new';
 }
 
 SKIP: {
@@ -33,7 +33,7 @@ SKIP: {
     unless defined $event;
 
   # waiting
-  is $event->add_port_events($port, SP_EVENT_RX_READY), SP_EVENT_RX_READY, 'Event->add_port';
+  is $event->add_port_events($port, 'SP_EVENT_RX_READY'), SP_EVENT_RX_READY, 'Event->add_port';
   is $event->wait(500), 500, 'Event->set_timeout';
 }
 

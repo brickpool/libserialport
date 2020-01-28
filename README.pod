@@ -1,13 +1,14 @@
 =head1 NAME
 
-SerialPort version 0.3.0
+SerialPort version 0.3.1
 
 =head1 DESCRIPTION
 
 Perl wrapper for the C<libserialport> C library.
 
 All essential functions of the entire library API are wrapped by using C<XS>.
-In addition, a higher-level OOP interface is also provided by using C<Moose>.
+In addition, a higher-level OOP interface is also provided by using C<Moo> and
+C<Type::Tiny>.
 
 The library could build only on Windows and should work on Windows and
 Unix-based systems. If it does not, please submit a Issue.
@@ -34,11 +35,15 @@ This module requires these modules or libraries and some other modules:
 
 =item *
 
-Moose
+Moo
 
 =item *
 
-MooseX::Params::Validate
+Type::Tiny
+
+=item *
+
+Function::Parameters
 
 =item *
 

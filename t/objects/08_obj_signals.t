@@ -22,11 +22,11 @@ SKIP: {
     unless defined $port;
 
   # open
-  ok $port->open(SP_MODE_READ), 'open';
+  ok $port->open('SP_MODE_READ'), 'open';
 
   # signal
   my $signal = $port->get_signals;
-  ok $signal >= 0 && $signal <= SP_SIG_CTS|SP_SIG_DSR|SP_SIG_DCD|SP_SIG_RI, 'get_signals';
+  ok $signal >= 0 && $signal <= (SP_SIG_CTS|SP_SIG_DSR|SP_SIG_DCD|SP_SIG_RI), 'get_signals';
   ok $port->start_break,  'start_break';
   ok $port->end_break,    'end_break';
   

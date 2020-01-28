@@ -7,7 +7,7 @@ my $port;
 eval {
   $port = Sigrok::SerialPort::Port->new(
     portname => 'COM3',
-    baudrate => undef
+    baudrate => undef,
   );
 } or warn @_;
 

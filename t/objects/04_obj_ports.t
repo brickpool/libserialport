@@ -1,7 +1,6 @@
 use strict;
 use Test::More tests => 19;
 
-use Sigrok::SerialPort qw( SP_MODE_READ );
 use Sigrok::SerialPort::List;
 use Sigrok::SerialPort::Port;
 
@@ -58,7 +57,7 @@ SKIP: {
     unless defined $port;
 
   # open port
-  ok $port->open(SP_MODE_READ), 'set_mode';
+  ok $port->open('SP_MODE_READ'), 'set_mode';
   ok $port->is_open, 'open';
 
   # test handle

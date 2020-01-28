@@ -1,11 +1,6 @@
 package Sigrok::SerialPort::Port::Config;
 
-use Moose;
-use MooseX::Params::Validate;
-use Carp qw( croak );
-use English qw( -no_match_vars );
-use Errno qw( :POSIX );
-
+# Serialport library
 use Sigrok::SerialPort qw(
   SP_OK
 
@@ -34,9 +29,36 @@ use Sigrok::SerialPort qw(
   sp_set_config_xon_xoff
   sp_set_config_flowcontrol
 );
+use Sigrok::SerialPort::Types qw(
+  Int_sp_parity
+  Int_sp_rts
+  Int_sp_cts
+  Int_sp_dtr
+  Int_sp_dsr
+  Int_sp_xonxoff
+  Int_sp_flowcontrol
+  Int_sp_signal
+  Int_sp_transport
+  Int_sp_baudrate
+  Int_sp_databits
+  Int_sp_stopbits
+  Int_sp_port_config
+);  
 use Sigrok::SerialPort::Error qw(
   SET_ERROR
 );
+
+# Standard packages
+use Carp qw( croak );
+use English qw( -no_match_vars );
+use Errno qw( :POSIX );
+
+# Use of Modern Perl
+use Moo;
+#use namespace::autoclean;
+use Types::Standard qw( Object Str Optional );
+use Type::Params qw( validate validate_named );
+use Function::Parameters;
 
 extends 'Sigrok::SerialPort::Base';
 
@@ -47,7 +69,8 @@ extends 'Sigrok::SerialPort::Base';
 ##
 
 has 'config_handle' => (
-  isa       => 'sp_port_config',
+  is        => 'ro',
+  isa       => Int_sp_port_config,
   required  => 1,
   lazy      => 1,
   init_arg  => 'handle',
@@ -57,7 +80,8 @@ has 'config_handle' => (
 );
 
 has 'baudrate' => (
-  isa       => 'Maybe[sp_baudrate]',
+  is        => 'rw',
+  isa       => Int_sp_baudrate,
   default   => -1,
   reader    => 'get_baudrate',
   writer    => 'set_baudrate',
@@ -66,7 +90,8 @@ has 'baudrate' => (
 );
 
 has 'bits' => (
-  isa       => 'Maybe[sp_databits]',
+  is        => 'rw',
+  isa       => Int_sp_databits,
   default   => -1,
   reader    => 'get_bits',
   writer    => 'set_bits',
@@ -75,7 +100,8 @@ has 'bits' => (
 );
 
 has 'parity' => (
-  isa       => 'Maybe[sp_parity]',
+  is        => 'rw',
+  isa       => Int_sp_parity,
   default   => -1,
   reader    => 'get_parity',
   writer    => 'set_parity',
@@ -84,7 +110,8 @@ has 'parity' => (
 );
 
 has 'stopbits' => (
-  isa       => 'Maybe[sp_stopbits]',
+  is        => 'rw',
+  isa       => Int_sp_stopbits,
   default   => -1,
   reader    => 'get_stopbits',
   writer    => 'set_stopbits',
@@ -93,7 +120,8 @@ has 'stopbits' => (
 );
 
 has 'rts' => (
-  isa       => 'Maybe[sp_rts]',
+  is        => 'rw',
+  isa       => Int_sp_rts,
   default   => -1,
   reader    => 'get_rts',
   writer    => 'set_rts',
@@ -102,7 +130,8 @@ has 'rts' => (
 );
 
 has 'cts' => (
-  isa       => 'Maybe[sp_cts]',
+  is        => 'rw',
+  isa       => Int_sp_cts,
   default   => -1,
   reader    => 'get_cts',
   writer    => 'set_cts',
@@ -111,7 +140,8 @@ has 'cts' => (
 );
 
 has 'dtr' => (
-  isa       => 'Maybe[sp_dtr]',
+  is        => 'rw',
+  isa       => Int_sp_dtr,
   default   => -1,
   reader    => 'get_dtr',
   writer    => 'set_dtr',
@@ -120,7 +150,8 @@ has 'dtr' => (
 );
 
 has 'dsr' => (
-  isa       => 'Maybe[sp_dsr]',
+  is        => 'rw',
+  isa       => Int_sp_dsr,
   default   => -1,
   reader    => 'get_dsr',
   writer    => 'set_dsr',
@@ -129,7 +160,8 @@ has 'dsr' => (
 );
 
 has 'xon_xoff' => (
-  isa       => 'Maybe[sp_xonxoff]',
+  is        => 'rw',
+  isa       => Int_sp_xonxoff,
   default   => -1,
   reader    => 'get_xon_xoff',
   writer    => 'set_xon_xoff',
@@ -138,7 +170,8 @@ has 'xon_xoff' => (
 );
 
 has 'flowcontrol' => (
-  isa       => 'Maybe[sp_flowcontrol]',
+  is        => 'rw',
+  isa       => Int_sp_flowcontrol,
   writer    => 'set_flowcontrol',
   # private methods
   trigger   => \&_trigger_flowcontrol,
@@ -155,9 +188,21 @@ before 'get_baudrate' => sub {
   $self->{baudrate} = $self->_get_config_baudrate;
 };
 
+around 'set_baudrate' => sub {
+  my ($code, $self, $arg) = @_;
+  my $ret_val = $self->_trigger_baudrate($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
+};
+
 before 'get_bits' => sub {
   my $self = shift;
   $self->{bits} = $self->_get_config_bits;
+};
+
+around 'set_bits' => sub {
+  my ($code, $self, $arg) = @_;
+  my $ret_val = $self->_trigger_bits($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
 };
 
 before 'get_parity' => sub {
@@ -165,9 +210,21 @@ before 'get_parity' => sub {
   $self->{parity} = $self->_get_config_parity;
 };
 
+around 'set_parity' => sub {
+  my ($code, $self, $arg) = @_;
+  my $ret_val = $self->_trigger_parity($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
+};
+
 before 'get_stopbits' => sub {
   my $self = shift;
   $self->{stopbits} = $self->_get_config_stopbits;
+};
+
+around 'set_stopbits' => sub {
+  my ($code, $self, $arg) = @_;
+  my $ret_val = $self->_trigger_stopbits($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
 };
 
 before 'get_rts' => sub {
@@ -175,9 +232,21 @@ before 'get_rts' => sub {
   $self->{rts} = $self->_get_config_rts;
 };
 
+around 'set_rts' => sub {
+  my ($code, $self, $arg) = @_;
+  my $ret_val = $self->_trigger_rts($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
+};
+
 before 'get_cts' => sub {
   my $self = shift;
   $self->{cts} = $self->_get_config_cts;
+};
+
+around 'set_cts' => sub {
+  my ($code, $self, $arg) = @_;
+  my $ret_val = $self->_trigger_cts($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
 };
 
 before 'get_dtr' => sub {
@@ -185,14 +254,38 @@ before 'get_dtr' => sub {
   $self->{dtr} = $self->_get_config_dtr;
 };
 
+around 'set_dtr' => sub {
+  my ($code, $self, $arg) = @_;
+  my $ret_val = $self->_trigger_dtr($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
+};
+
 before 'get_dsr' => sub {
   my $self = shift;
   $self->{dsr} = $self->_get_config_dsr;
 };
 
+around 'set_dsr' => sub {
+  my ($code, $self, $arg) = @_;
+  my $ret_val = $self->_trigger_dsr($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
+};
+
 before 'get_xon_xoff' => sub {
   my $self = shift;
   $self->{xon_xoff} = $self->_get_config_xon_xoff;
+};
+
+around 'set_xon_xoff' => sub {
+  my ($code, $self, $arg) = @_;
+  my $ret_val = $self->_trigger_xon_xoff($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
+};
+
+around 'set_flowcontrol' => sub {
+  my ($code, $self, $arg) = @_;
+  my $ret_val = $self->_trigger_flowcontrol($arg);
+  return defined $ret_val ? $self->$code($ret_val) : undef;
 };
 
 ##
@@ -212,11 +305,7 @@ sub DEMOLISH {
 #
 ##
 
-sub cget {
-  my $self = shift;
-  my ($option) = pos_validated_list( \@_,
-    { isa => 'Str' },
-  );
+method cget(Str $option) {
   $option =~ s/^\b/\-/;  # option => -option
   my $ret_val;
   SWITCH: for ($option) {
@@ -241,29 +330,29 @@ sub cget {
 
 sub configure {
   my $self = shift;
+  unless ($self->get_handle) {
+    # The value of the config argument is invalid.
+    SET_ERROR(ENXIO); # No such device or address
+    return wantarray ? () : undef;
+  }
   unless (@_) {
-    unless ($self->get_handle) {
-      # The value of the config argument is invalid.
-      SET_ERROR(ENXIO); # No such device or address
-      return wantarray ? () : undef;
-    }
     my @ret_val = qw(-baudrate -bits -parity -stopbits -rts -cts -dtr -dsr -xon_xoff -flowcontrol);
     return wantarray ? @ret_val : scalar @ret_val;
   }
-  my (%options) = validated_hash( \@_,
-    '-baudrate'    => { isa => 'sp_baudrate',    optional => 1 },
-    '-bits'        => { isa => 'sp_databits',    optional => 1 },
-    '-parity'      => { isa => 'sp_parity',      optional => 1 },
-    '-stopbits'    => { isa => 'sp_stopbits',    optional => 1 },
-    '-rts'         => { isa => 'sp_rts',         optional => 1 },
-    '-cts'         => { isa => 'sp_cts',         optional => 1 },
-    '-dtr'         => { isa => 'sp_dtr',         optional => 1 },
-    '-dsr'         => { isa => 'sp_dsr',         optional => 1 },
-    '-xon_xoff'    => { isa => 'sp_xonxoff',     optional => 1 },
-    '-flowcontrol' => { isa => 'sp_flowcontrol', optional => 1 },
+  my $options = validate_named( \@_, 
+    '-baudrate'    => Optional[Int_sp_baudrate],
+    '-bits'        => Optional[Int_sp_databits],
+    '-parity'      => Optional[Int_sp_parity],
+    '-stopbits'    => Optional[Int_sp_stopbits],
+    '-rts'         => Optional[Int_sp_rts],
+    '-cts'         => Optional[Int_sp_cts],
+    '-dtr'         => Optional[Int_sp_dtr],
+    '-dsr'         => Optional[Int_sp_dsr],
+    '-xon_xoff'    => Optional[Int_sp_xonxoff],
+    '-flowcontrol' => Optional[Int_sp_flowcontrol],
   );
   my $cnt = 0;
-  while ( my ($key, $value) = each %options ) {
+  while ( my ($key, $value) = each %$options ) {
     SWITCH: for ($key) {
       /^-baudrate$/     && do { defined $self->set_baudrate($value)     or return wantarray ? () : undef; last };
       /^-bits$/         && do { defined $self->set_bits($value)         or return wantarray ? () : undef; last };
@@ -278,7 +367,7 @@ sub configure {
     }
     $cnt++
   }
-  return wantarray ? values %options : $cnt;
+  return wantarray ? values %$options : $cnt;
 }
 
 ##
@@ -310,10 +399,10 @@ sub _build_handle {
 ##
 
 sub _trigger_baudrate {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_baudrate' },
-    { isa => 'sp_baudrate', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_baudrate,
+    Optional[Int_sp_baudrate],
   );
   unless ($self->get_handle) {
     # The value of the config argument is invalid.
@@ -329,10 +418,10 @@ sub _trigger_baudrate {
 }
 
 sub _trigger_bits {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_databits' },
-    { isa => 'sp_databits', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_databits,
+    Optional[Int_sp_databits],
   );
   unless ($self->get_handle) {
     # The value of the config argument is invalid.
@@ -348,10 +437,10 @@ sub _trigger_bits {
 }
 
 sub _trigger_parity {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_parity' },
-    { isa => 'sp_parity', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_parity,
+    Optional[Int_sp_parity],
   );
   unless ($self->get_handle) {
     # The value of the config argument is invalid.
@@ -367,10 +456,10 @@ sub _trigger_parity {
 }
 
 sub _trigger_stopbits {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_stopbits' },
-    { isa => 'sp_stopbits', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_stopbits,
+    Optional[Int_sp_stopbits],
   );
   unless ($self->get_handle) {
     # The value of the config argument is invalid.
@@ -386,10 +475,10 @@ sub _trigger_stopbits {
 }
 
 sub _trigger_rts {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_rts' },
-    { isa => 'sp_rts', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_rts,
+    Optional[Int_sp_rts],
   );
   unless ($self->get_handle) {
     # The value of the config argument is invalid.
@@ -405,10 +494,10 @@ sub _trigger_rts {
 }
 
 sub _trigger_cts {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_cts' },
-    { isa => 'sp_cts', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_cts,
+    Optional[Int_sp_cts],
   );
   unless ($self->get_handle) {
     # The value of the config argument is invalid.
@@ -424,10 +513,10 @@ sub _trigger_cts {
 }
 
 sub _trigger_dtr {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_dtr' },
-    { isa => 'sp_dtr', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_dtr,
+    Optional[Int_sp_dtr],
   );
   unless ($self->get_handle) {
     # The value of the config argument is invalid.
@@ -443,10 +532,10 @@ sub _trigger_dtr {
 }
 
 sub _trigger_dsr {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_dsr' },
-    { isa => 'sp_dsr', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_dsr,
+    Optional[Int_sp_dsr],
   );
   unless ($self->get_handle) {
     # The value of the config argument is invalid.
@@ -462,10 +551,10 @@ sub _trigger_dsr {
 }
 
 sub _trigger_xon_xoff {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_xonxoff' },
-    { isa => 'sp_xonxoff', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_xonxoff,
+    Optional[Int_sp_xonxoff],
   );
   unless ($self->get_handle) {
     # The value of the config argument is invalid.
@@ -481,10 +570,10 @@ sub _trigger_xon_xoff {
 }
 
 sub _trigger_flowcontrol {
-  my $self = shift;
-  my ($new, $old) = pos_validated_list( \@_,
-    { isa => 'sp_flowcontrol' },
-    { isa => 'sp_flowcontrol', optional => 1 },
+  my ($self, $new, $old) = validate( \@_,
+    Object,
+    Int_sp_flowcontrol,
+    Optional[Int_sp_flowcontrol],
   );
   unless ($self->get_handle) {
     # The value of the config argument is invalid.
@@ -660,8 +749,7 @@ sub _free_config {
   return 1;
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+no Moo;
 
 1;
 
