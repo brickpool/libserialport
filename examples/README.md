@@ -12,10 +12,10 @@ FILES
 This directory contains simple serial programs by using the
 `Sigrok::SerialPort::Backend` module.
 
-- `list-ports.pl` port of `libserialport-example` by Rob Bultman
-- `example.pl` port of `libserialport example.c` by Callum Bryant
-- `easy.pl` port of 'EASY PORTABLE SERIAL PORTS' by Al Williams
-- `serial.ino` Arduino sketch 'Sample Program' by Renesas Electronics Corporation
+- `list-ports.pl` port of _**libserialport-example**_ by Rob Bultman
+- `easy.pl` port of _**EASY PORTABLE SERIAL PORTS**_ by Al Williams
+- `example.pl` port of _**libserialport example.c**_ by Callum Bryant
+- `serial.ino` Arduino sketch _**Sample Program**_ by Renesas Electronics Corporation
 
 SEE ALSO
 --------
